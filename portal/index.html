@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meetings · Organizer Portal · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83;
+  --purple-dark: #2e1b5e;
+  --purple-mid: #6b4fa0;
+  --purple-tint: #f2eefa;
+  --gold: #b7a57a;
+  --gold-light: #e6dcc6;
+  --white: #ffffff;
+  --off-white: #faf9fd;
+  --text: #1c1230;
+  --text-mid: #5a5070;
+  --text-light: #8a84a0;
+  --border: #e0dcf0;
+  --success-text: #1a5c35;
+  --success-bg: #eef8f3;
+  --success-border: #a3d4bb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--off-white); color: var(--text); }
+
+/* Header */
+.portal-header {
+  background: var(--purple-dark);
+  border-bottom: 2px solid var(--gold);
+  padding: 0 40px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.portal-brand {
+  display: flex; flex-direction: column;
+  text-decoration: none;
+}
+.portal-brand-name {
+  color: var(--white);
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.portal-brand-sub {
+  color: var(--gold);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  opacity: 0.8;
+}
+.header-user {
+  display: flex; align-items: center; gap: 16px;
+}
+.user-email {
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+}
+.btn-signout {
+  background: transparent;
+  border: 1px solid rgba(183,165,122,0.45);
+  color: var(--gold-light);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px; font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-signout:hover { background: rgba(183,165,122,0.12); border-color: var(--gold); }
+
+/* Main */
+.portal-main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+.toolbar h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 600;
+  color: var(--purple-dark);
+}
+.btn-create {
+  background: var(--purple);
+  color: var(--white);
+  padding: 10px 22px;
+  border-radius: 5px;
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: background 0.15s;
+  display: inline-block;
+}
+.btn-create:hover { background: var(--purple-dark); }
+
+/* Alert */
+.alert {
+  display: none;
+  padding: 12px 16px;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.alert.visible { display: block; }
+.alert.success {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+/* Meeting list */
+.meeting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.15s;
+}
+.meeting-row:hover { box-shadow: 0 2px 12px rgba(75,46,131,0.08); }
+.meeting-row.past { opacity: 0.5; }
+.meeting-info { flex: 1; min-width: 0; }
+.meeting-title {
+  font-size: 16px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.meeting-meta {
+  font-size: 13px;
+  color: var(--text-mid);
+}
+.past-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: var(--border);
+  padding: 2px 7px; border-radius: 3px;
+  margin-left: 8px; vertical-align: middle;
+}
+.meeting-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-edit {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--purple);
+  padding: 7px 18px;
+  border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-edit:hover { background: var(--purple-tint); border-color: var(--purple-mid); }
+.btn-delete {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: #8b3a3a;
+  padding: 7px 14px;
+  border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-delete:hover { background: #fdf2f2; border-color: #e8b4b4; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-light);
+}
+.empty-state p { font-size: 15px; margin-bottom: 20px; }
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <a href="/portal/" class="portal-brand">
+    <span class="portal-brand-name">AI Learning Lab</span>
+    <span class="portal-brand-sub">Organizer Portal</span>
+  </a>
+  <div class="header-user">
+    <nav style="display:flex;gap:4px;margin-right:8px;">
+      <a href="/portal/" style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:500;text-decoration:none;padding:6px 12px;border-radius:4px;background:rgba(255,255,255,0.12);">Meetings</a>
+      <a href="/portal/cohorts/" style="color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;text-decoration:none;padding:6px 12px;border-radius:4px;transition:background 0.15s,color 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.color='rgba(255,255,255,0.65)';this.style.background='transparent'">Cohorts</a>
+    </nav>
+    <span class="user-email" id="user-email"></span>
+    <button class="btn-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="portal-main">
+  <div class="toolbar">
+    <h1>Meetings</h1>
+    <a href="/portal/meetings/new/" class="btn-create">+ Create meeting</a>
+  </div>
+
+  <div id="alert" class="alert"></div>
+  <div id="meetings-list"><div class="loading">Loading…</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function init() {
+  var result = await _supabase.auth.getSession();
+  var session = result.data.session;
+  if (!session) {
+    window.location.href = '/portal/login/';
+    return;
+  }
+
+  document.getElementById('user-email').textContent = session.user.email;
+
+  document.getElementById('signout-btn').addEventListener('click', async function() {
+    await _supabase.auth.signOut();
+    window.location.href = '/portal/login/';
+  });
+
+  // Show success message from redirect
+  var params = new URLSearchParams(window.location.search);
+  var success = params.get('success');
+  if (success) {
+    var msg = success === 'created'
+      ? 'Meeting created and invites sent.'
+      : success === 'updated'
+      ? 'Meeting updated and invites resent.'
+      : '';
+    if (msg) showAlert(msg);
+    // Clean up the URL
+    history.replaceState(null, '', '/portal/');
+  }
+
+  await loadMeetings();
+}
+
+async function loadMeetings() {
+  var result = await _supabase
+    .from('meetings')
+    .select('id, title, start_time, end_time, location')
+    .order('start_time', { ascending: true });
+
+  var listEl = document.getElementById('meetings-list');
+
+  if (result.error) {
+    listEl.innerHTML = '<p style="color:#8b1a1a;padding:20px;">Error loading meetings: ' + escapeHtml(result.error.message) + '</p>';
+    return;
+  }
+
+  var meetings = result.data;
+  if (!meetings || meetings.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><p>No meetings yet.</p><a href="/portal/meetings/new/" class="btn-create">Create your first meeting</a></div>';
+    return;
+  }
+
+  var now = new Date();
+  listEl.innerHTML = meetings.map(function(m) {
+    var isPast = new Date(m.end_time) < now;
+    var dateStr = formatDateTime(m.start_time);
+    var meta = dateStr + (m.location ? ' · ' + escapeHtml(m.location) : '');
+    return '<div class="meeting-row' + (isPast ? ' past' : '') + '" id="row-' + m.id + '">' +
+      '<div class="meeting-info">' +
+        '<div class="meeting-title">' + escapeHtml(m.title) + (isPast ? '<span class="past-badge">Past</span>' : '') + '</div>' +
+        '<div class="meeting-meta">' + meta + '</div>' +
+      '</div>' +
+      '<div class="meeting-actions">' +
+        '<a href="/portal/meetings/edit/?id=' + m.id + '" class="btn-edit">Edit</a>' +
+        '<button class="btn-delete" onclick="deleteMeeting(\'' + m.id + '\', \'' + escapeAttr(m.title) + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function formatDateTime(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }) +
+    ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) + ' PT';
+}
+
+function showAlert(msg) {
+  var el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = 'alert visible success';
+}
+
+async function deleteMeeting(id, title) {
+  if (!confirm('Delete "' + title + '"?\n\nThis cannot be undone.')) return;
+
+  var result = await _supabase.from('meetings').delete().eq('id', id);
+  if (result.error) {
+    alert('Error deleting meeting: ' + result.error.message);
+    return;
+  }
+
+  var row = document.getElementById('row-' + id);
+  if (row) row.remove();
+
+  var list = document.getElementById('meetings-list');
+  if (list && !list.querySelector('.meeting-row')) {
+    list.innerHTML = '<div class="empty-state"><p>No meetings yet.</p><a href="/portal/meetings/new/" class="btn-create">Create your first meeting</a></div>';
+  }
+}
+
+function escapeHtml(str) {
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function escapeAttr(str) {
+  return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+init();
+</script>
+</body>
+</html>

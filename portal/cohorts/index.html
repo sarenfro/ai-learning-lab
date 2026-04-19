@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cohorts · Organizer Portal · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83;
+  --purple-dark: #2e1b5e;
+  --purple-mid: #6b4fa0;
+  --purple-tint: #f2eefa;
+  --gold: #b7a57a;
+  --gold-light: #e6dcc6;
+  --white: #ffffff;
+  --off-white: #faf9fd;
+  --text: #1c1230;
+  --text-mid: #5a5070;
+  --text-light: #8a84a0;
+  --border: #e0dcf0;
+  --error-text: #8b1a1a;
+  --error-bg: #fdf2f2;
+  --error-border: #e8b4b4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--off-white); color: var(--text); }
+
+.portal-header {
+  background: var(--purple-dark);
+  border-bottom: 2px solid var(--gold);
+  padding: 0 40px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.portal-brand { display: flex; flex-direction: column; text-decoration: none; }
+.portal-brand-name { color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; }
+.portal-brand-sub { color: var(--gold); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header-nav { display: flex; gap: 4px; }
+.header-nav a {
+  color: rgba(255,255,255,0.65);
+  font-size: 13px; font-weight: 500;
+  text-decoration: none;
+  padding: 6px 12px; border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.header-nav a:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+.header-nav a.active { color: var(--white); background: rgba(255,255,255,0.12); }
+.user-email { color: rgba(255,255,255,0.6); font-size: 12px; }
+.btn-signout {
+  background: transparent; border: 1px solid rgba(183,165,122,0.45); color: var(--gold-light);
+  padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-signout:hover { background: rgba(183,165,122,0.12); border-color: var(--gold); }
+
+.portal-main { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+.toolbar h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--purple-dark); }
+.btn-create {
+  background: var(--purple); color: var(--white);
+  padding: 10px 22px; border-radius: 5px;
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  letter-spacing: 0.03em; transition: background 0.15s; display: inline-block;
+}
+.btn-create:hover { background: var(--purple-dark); }
+
+.cohort-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 18px 22px; background: var(--white);
+  border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px;
+  transition: box-shadow 0.15s;
+}
+.cohort-row:hover { box-shadow: 0 2px 12px rgba(75,46,131,0.08); }
+.cohort-info { flex: 1; min-width: 0; }
+.cohort-name { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.cohort-meta { font-size: 13px; color: var(--text-mid); }
+.cohort-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-view {
+  background: transparent; border: 1.5px solid var(--border); color: var(--purple);
+  padding: 7px 18px; border-radius: 4px; font-size: 13px; font-weight: 500;
+  text-decoration: none; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-view:hover { background: var(--purple-tint); border-color: var(--purple-mid); }
+.btn-delete {
+  background: transparent; border: 1.5px solid var(--border); color: #8b3a3a;
+  padding: 7px 14px; border-radius: 4px; font-size: 13px; font-weight: 500;
+  white-space: nowrap; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-delete:hover { background: var(--error-bg); border-color: var(--error-border); }
+
+.empty-state { text-align: center; padding: 64px 24px; color: var(--text-light); }
+.empty-state p { font-size: 15px; margin-bottom: 20px; }
+.loading { text-align: center; padding: 48px; color: var(--text-light); font-size: 14px; }
+
+/* Member preview panel */
+.member-panel {
+  display: none;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+.member-panel.open { display: block; }
+.member-panel-header {
+  padding: 12px 22px;
+  background: var(--purple-tint);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-mid);
+}
+.member-list { padding: 8px 0; max-height: 280px; overflow-y: auto; }
+.member-item {
+  display: flex; gap: 16px; align-items: baseline;
+  padding: 8px 22px; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.member-item:last-child { border-bottom: none; }
+.member-item-name { font-weight: 500; color: var(--text); min-width: 160px; }
+.member-item-email { color: var(--text-mid); }
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <a href="/portal/" class="portal-brand">
+    <span class="portal-brand-name">AI Learning Lab</span>
+    <span class="portal-brand-sub">Organizer Portal</span>
+  </a>
+  <div class="header-right">
+    <nav class="header-nav">
+      <a href="/portal/">Meetings</a>
+      <a href="/portal/cohorts/" class="active">Cohorts</a>
+    </nav>
+    <span class="user-email" id="user-email"></span>
+    <button class="btn-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="portal-main">
+  <div class="toolbar">
+    <h1>Cohorts</h1>
+    <a href="/portal/cohorts/new/" class="btn-create">+ New cohort</a>
+  </div>
+  <div id="cohorts-list"><div class="loading">Loading…</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function init() {
+  var result = await _supabase.auth.getSession();
+  if (!result.data.session) { window.location.href = '/portal/login/'; return; }
+  document.getElementById('user-email').textContent = result.data.session.user.email;
+  document.getElementById('signout-btn').addEventListener('click', async function() {
+    await _supabase.auth.signOut();
+    window.location.href = '/portal/login/';
+  });
+  await loadCohorts();
+}
+
+async function loadCohorts() {
+  var result = await _supabase.from('cohorts').select('id, name, members, created_at').order('created_at', { ascending: false });
+  var listEl = document.getElementById('cohorts-list');
+
+  if (result.error) {
+    listEl.innerHTML = '<p style="color:var(--error-text);padding:20px;">Error loading cohorts: ' + escapeHtml(result.error.message) + '</p>';
+    return;
+  }
+
+  var cohorts = result.data;
+  if (!cohorts || cohorts.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><p>No cohorts yet.</p><a href="/portal/cohorts/new/" class="btn-create">Create your first cohort</a></div>';
+    return;
+  }
+
+  listEl.innerHTML = cohorts.map(function(c) {
+    var count = Array.isArray(c.members) ? c.members.length : 0;
+    return '<div id="row-' + c.id + '">' +
+      '<div class="cohort-row">' +
+        '<div class="cohort-info">' +
+          '<div class="cohort-name">' + escapeHtml(c.name) + '</div>' +
+          '<div class="cohort-meta">' + count + ' member' + (count !== 1 ? 's' : '') + '</div>' +
+        '</div>' +
+        '<div class="cohort-actions">' +
+          '<button class="btn-view" onclick="toggleMembers(\'' + c.id + '\')">View members</button>' +
+          '<button class="btn-delete" onclick="deleteCohort(\'' + c.id + '\', \'' + escapeAttr(c.name) + '\')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="member-panel" id="panel-' + c.id + '">' +
+        '<div class="member-panel-header">Members</div>' +
+        '<div class="member-list">' +
+          (Array.isArray(c.members) ? c.members.map(function(m) {
+            return '<div class="member-item">' +
+              '<span class="member-item-name">' + escapeHtml(m.name) + '</span>' +
+              '<span class="member-item-email">' + escapeHtml(m.email) + '</span>' +
+            '</div>';
+          }).join('') : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleMembers(id) {
+  var panel = document.getElementById('panel-' + id);
+  var btn = panel.previousElementSibling.querySelector('.btn-view');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    btn.textContent = 'View members';
+  } else {
+    panel.classList.add('open');
+    btn.textContent = 'Hide members';
+  }
+}
+
+async function deleteCohort(id, name) {
+  if (!confirm('Delete cohort "' + name + '"?\n\nThis will not affect any existing meetings.')) return;
+  var result = await _supabase.from('cohorts').delete().eq('id', id);
+  if (result.error) { alert('Error: ' + result.error.message); return; }
+  var row = document.getElementById('row-' + id);
+  if (row) row.remove();
+  var list = document.getElementById('cohorts-list');
+  if (list && !list.querySelector('.cohort-row')) {
+    list.innerHTML = '<div class="empty-state"><p>No cohorts yet.</p><a href="/portal/cohorts/new/" class="btn-create">Create your first cohort</a></div>';
+  }
+}
+
+function escapeHtml(str) {
+  var d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function escapeAttr(str) {
+  return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+init();
+</script>
+</body>
+</html>

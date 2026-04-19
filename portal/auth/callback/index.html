@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing in… · AI Learning Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple-dark: #2e1b5e;
+  --gold: #b7a57a;
+  --white: #ffffff;
+  --text-light: #8a84a0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--purple-dark);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+}
+.message {
+  text-align: center;
+  padding: 40px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(183,165,122,0.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.message p { color: rgba(255,255,255,0.65); font-size: 15px; }
+.error-msg {
+  color: #f4a1a1;
+  font-size: 14px;
+  margin-top: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="message">
+  <div id="spinner" class="spinner"></div>
+  <p id="msg">Signing you in…</p>
+  <p id="error-msg" class="error-msg" style="display:none;"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function showError(msg) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('msg').textContent = 'Sign-in failed.';
+  var errEl = document.getElementById('error-msg');
+  errEl.textContent = msg + ' Redirecting to login…';
+  errEl.style.display = 'block';
+  setTimeout(function() {
+    window.location.href = '/portal/login/';
+  }, 2500);
+}
+
+// Supabase JS v2 automatically detects and exchanges the token in the URL
+// hash/query params when getSession() or onAuthStateChange is called.
+_supabase.auth.onAuthStateChange(function(event, session) {
+  if (event === 'SIGNED_IN' && session) {
+    window.location.href = '/portal/';
+  } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+    // no-op; keep waiting
+  }
+});
+
+// Also check immediately in case the session was set synchronously
+_supabase.auth.getSession().then(function(result) {
+  if (result.data.session) {
+    window.location.href = '/portal/';
+    return;
+  }
+  if (result.error) {
+    showError('The sign-in link may have expired or already been used.');
+  }
+});
+
+// Fallback timeout — if nothing has happened after 8 seconds, redirect to login
+setTimeout(function() {
+  _supabase.auth.getSession().then(function(result) {
+    if (!result.data.session) {
+      showError('The sign-in link may have expired. Please try again.');
+    }
+  });
+}, 8000);
+</script>
+</body>
+</html>
