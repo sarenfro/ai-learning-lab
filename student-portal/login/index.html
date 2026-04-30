@@ -89,7 +89,7 @@ var btn      = document.getElementById('submit-btn');
 // Show error from failed auth callback
 var params = new URLSearchParams(window.location.search);
 if (params.get('error') === 'notallowed') {
-  showStatus('error', 'Your email is not enrolled in the current cohort. Please contact your organizer.');
+  showStatus('error', 'Your email is not registered in the AI Learning Lab. Please contact your organizer.');
 }
 
 _sb.auth.getSession().then(function(r) {
@@ -103,10 +103,10 @@ form.addEventListener('submit', async function(e) {
 
   btn.disabled = true; btn.textContent = 'Checking…';
 
-  // Verify cohort membership before sending OTP
-  var check = await _sb.rpc('is_cohort_member', { p_email: email });
+  // Verify student assignment before sending OTP
+  var check = await _sb.rpc('is_assigned_student', { p_email: email });
   if (check.error || !check.data) {
-    showStatus('error', 'Your email is not enrolled in the current cohort. Please contact your organizer.');
+    showStatus('error', 'Your email is not registered in the AI Learning Lab. Please contact your organizer.');
     btn.disabled = false; btn.textContent = 'Send sign-in link';
     return;
   }

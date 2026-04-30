@@ -37,10 +37,10 @@ function fail(msg) {
 }
 
 async function verify(session) {
-  var check = await _sb.rpc('is_cohort_member', { p_email: session.user.email });
+  var check = await _sb.rpc('is_assigned_student', { p_email: session.user.email });
   if (check.error || !check.data) {
     await _sb.auth.signOut();
-    fail('Your email is not enrolled in the current cohort.');
+    fail('Your email is not registered in the AI Learning Lab.');
   } else {
     window.location.href = '/student-portal/';
   }
