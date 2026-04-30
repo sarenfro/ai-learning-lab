@@ -136,6 +136,11 @@ async function init() {
     _sb.from('company_contacts').select('*')
   ]);
 
+  if (coRes.error)  console.error('companies error:',  coRes.error);
+  if (cohRes.error) console.error('cohorts error:',   cohRes.error);
+  if (asgRes.error) console.error('assignments error:', asgRes.error);
+  if (conRes.error) console.error('contacts error:',  conRes.error);
+
   _companies = coRes.data || [];
   _assignments = asgRes.data || [];
   _contacts = conRes.data || [];
