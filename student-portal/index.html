@@ -216,7 +216,7 @@ async function init() {
   });
 
   // Verify cohort membership
-  var { data: isMember } = await _sb.rpc('is_cohort_member', { p_email: email });
+  var { data: isMember } = await _sb.rpc('is_assigned_student', { p_email: email });
   if (!isMember) {
     await _sb.auth.signOut(); window.location.href = '/student-portal/login/?error=notallowed'; return;
   }
