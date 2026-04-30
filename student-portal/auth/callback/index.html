@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing in… · AI Learning Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --purple-dark: #2e1b5e; --gold: #b7a57a; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--purple-dark); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #fff; }
+.message { text-align: center; padding: 40px; }
+.spinner { width: 36px; height: 36px; border: 3px solid rgba(183,165,122,0.25); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+p { color: rgba(255,255,255,0.65); font-size: 15px; }
+.err { color: #f4a1a1; font-size: 14px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="message">
+  <div id="spinner" class="spinner"></div>
+  <p id="msg">Signing you in…</p>
+  <p id="err" class="err" style="display:none;"></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function fail(msg) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('msg').textContent = 'Access denied.';
+  var e = document.getElementById('err');
+  e.textContent = (msg || 'Sign-in failed.') + ' Redirecting…';
+  e.style.display = 'block';
+  setTimeout(function() { window.location.href = '/student-portal/login/?error=notallowed'; }, 2500);
+}
+
+async function verify(session) {
+  var check = await _sb.rpc('is_cohort_member', { p_email: session.user.email });
+  if (check.error || !check.data) {
+    await _sb.auth.signOut();
+    fail('Your email is not enrolled in the current cohort.');
+  } else {
+    window.location.href = '/student-portal/';
+  }
+}
+
+_sb.auth.onAuthStateChange(function(event, session) {
+  if (event === 'SIGNED_IN' && session) verify(session);
+});
+
+_sb.auth.getSession().then(function(r) {
+  if (r.data.session) verify(r.data.session);
+  else if (r.error) fail('The sign-in link may have expired or already been used.');
+});
+
+setTimeout(function() {
+  _sb.auth.getSession().then(function(r) {
+    if (!r.data.session) fail('The sign-in link may have expired. Please try again.');
+  });
+}, 8000);
+</script>
+</body>
+</html>

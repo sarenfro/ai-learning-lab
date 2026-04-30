@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Portal Login · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83; --purple-dark: #2e1b5e; --purple-mid: #6b4fa0;
+  --gold: #b7a57a; --gold-light: #e6dcc6; --white: #ffffff;
+  --text: #1c1230; --text-mid: #5a5070; --text-light: #8a84a0;
+  --border: #dcd6f0;
+  --error-text: #8b1a1a; --error-bg: #fdf2f2; --error-border: #e8b4b4;
+  --success-text: #1a5c35; --success-bg: #eef8f3; --success-border: #a3d4bb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--purple-dark); min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 24px;
+}
+.card {
+  background: var(--white); border-radius: 8px; padding: 48px 44px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+}
+.card-brand { text-align: center; margin-bottom: 36px; }
+.card-seal {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--gold); display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 20px; color: var(--purple-dark);
+  margin: 0 auto 14px; border: 2px solid rgba(183,165,122,0.4);
+  box-shadow: 0 0 0 4px rgba(183,165,122,0.12);
+}
+.card-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--purple-dark); margin-bottom: 4px; }
+.card-subtitle { font-size: 12px; color: var(--text-light); letter-spacing: 0.06em; text-transform: uppercase; }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+input[type="email"] {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 5px;
+  font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type="email"]:focus { outline: none; border-color: var(--purple-mid); box-shadow: 0 0 0 3px rgba(75,46,131,0.1); }
+button[type="submit"] {
+  width: 100%; padding: 13px; background: var(--purple); color: var(--white); border: none;
+  border-radius: 5px; font-size: 14px; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif;
+  letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s;
+}
+button[type="submit"]:hover { background: var(--purple-dark); }
+button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+.status { display: none; padding: 12px 16px; border-radius: 5px; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+.status.visible { display: block; }
+.status.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text); }
+.status.success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); }
+.back-link { display: block; text-align: center; margin-top: 24px; font-size: 12px; color: var(--text-light); text-decoration: none; }
+.back-link:hover { color: var(--purple); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-brand">
+    <div class="card-seal">AI</div>
+    <div class="card-title">Student Portal</div>
+    <div class="card-subtitle">AI Learning Lab · Foster School of Business</div>
+  </div>
+  <div id="status" class="status"></div>
+  <form id="login-form">
+    <div class="form-group">
+      <label for="email">Your UW email address</label>
+      <input type="email" id="email" name="email" autocomplete="email" placeholder="you@uw.edu" required>
+    </div>
+    <button type="submit" id="submit-btn">Send sign-in link</button>
+  </form>
+  <a href="/" class="back-link">← Back to public site</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var statusEl = document.getElementById('status');
+var form     = document.getElementById('login-form');
+var btn      = document.getElementById('submit-btn');
+
+// Show error from failed auth callback
+var params = new URLSearchParams(window.location.search);
+if (params.get('error') === 'notallowed') {
+  showStatus('error', 'Your email is not enrolled in the current cohort. Please contact your organizer.');
+}
+
+_sb.auth.getSession().then(function(r) {
+  if (r.data.session) window.location.href = '/student-portal/';
+});
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  clearStatus();
+  var email = document.getElementById('email').value.trim().toLowerCase();
+
+  btn.disabled = true; btn.textContent = 'Checking…';
+
+  // Verify cohort membership before sending OTP
+  var check = await _sb.rpc('is_cohort_member', { p_email: email });
+  if (check.error || !check.data) {
+    showStatus('error', 'Your email is not enrolled in the current cohort. Please contact your organizer.');
+    btn.disabled = false; btn.textContent = 'Send sign-in link';
+    return;
+  }
+
+  btn.textContent = 'Sending…';
+  var result = await _sb.auth.signInWithOtp({
+    email: email,
+    options: { emailRedirectTo: window.location.origin + '/student-portal/auth/callback/' }
+  });
+  if (result.error) {
+    showStatus('error', 'Something went wrong. Please try again.');
+    btn.disabled = false; btn.textContent = 'Send sign-in link';
+    return;
+  }
+  form.style.display = 'none';
+  showStatus('success', 'Check your email for a sign-in link. You can close this tab.');
+});
+
+function showStatus(type, msg) { statusEl.textContent = msg; statusEl.className = 'status visible ' + type; }
+function clearStatus() { statusEl.className = 'status'; statusEl.textContent = ''; }
+</script>
+</body>
+</html>

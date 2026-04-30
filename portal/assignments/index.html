@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignments · Organizer Portal · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83; --purple-dark: #2e1b5e; --purple-mid: #6b4fa0;
+  --purple-tint: #f2eefa; --gold: #b7a57a; --gold-light: #e6dcc6;
+  --white: #ffffff; --off-white: #faf9fd; --gray: #f0eef8;
+  --text: #1c1230; --text-mid: #5a5070; --text-light: #8a84a0; --border: #e0dcf0;
+  --error-text: #8b1a1a; --error-bg: #fdf2f2; --error-border: #e8b4b4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--off-white); color: var(--text); }
+
+.portal-header { background: var(--purple-dark); border-bottom: 2px solid var(--gold); padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.portal-brand { display: flex; flex-direction: column; text-decoration: none; }
+.portal-brand-name { color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; }
+.portal-brand-sub { color: var(--gold); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header-nav { display: flex; gap: 4px; }
+.header-nav a { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; text-decoration: none; padding: 6px 12px; border-radius: 4px; transition: background 0.15s, color 0.15s; }
+.header-nav a:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+.header-nav a.active { color: var(--white); background: rgba(255,255,255,0.12); }
+.user-email { color: rgba(255,255,255,0.6); font-size: 12px; }
+.btn-signout { background: transparent; border: 1px solid rgba(183,165,122,0.45); color: var(--gold-light); padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: background 0.15s; }
+.btn-signout:hover { background: rgba(183,165,122,0.12); }
+
+.portal-main { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+.page-title { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 600; color: var(--purple-dark); margin-bottom: 8px; }
+.page-sub { color: var(--text-mid); font-size: 14px; margin-bottom: 36px; }
+
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 32px; }
+.tab { padding: 10px 22px; font-size: 13px; font-weight: 500; color: var(--text-mid); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s; background: none; border-left: none; border-right: none; border-top: none; font-family: 'IBM Plex Sans', sans-serif; }
+.tab:hover { color: var(--purple); }
+.tab.active { color: var(--purple); border-bottom-color: var(--purple); font-weight: 600; }
+
+/* Company blocks */
+.company-block { background: var(--white); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+.company-block-header { padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; }
+.company-block-header:hover { background: var(--off-white); }
+.company-block-name { font-size: 16px; font-weight: 600; color: var(--text); }
+.company-block-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.chevron { font-size: 10px; color: var(--text-light); transition: transform 0.2s; }
+.company-block.open .chevron { transform: rotate(180deg); }
+
+.company-block-body { display: none; border-top: 1px solid var(--border); padding: 20px 22px; }
+.company-block.open .company-block-body { display: block; }
+
+.sub-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 10px; }
+
+/* Assignment rows */
+.assign-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 8px; padding: 10px 12px; background: var(--off-white); border: 1px solid var(--border); border-radius: 5px; }
+.assign-row-info { min-width: 0; }
+.assign-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.assign-email { font-size: 12px; color: var(--text-light); }
+.btn-remove { background: none; border: 1.5px solid var(--border); color: var(--error-text); padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.15s; white-space: nowrap; }
+.btn-remove:hover { background: var(--error-bg); border-color: var(--error-border); }
+
+/* Add form */
+.add-form { margin-top: 14px; }
+.add-row { display: flex; gap: 10px; align-items: flex-start; }
+.add-row select, .add-row input { flex: 1; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 5px; font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background: var(--white); transition: border-color 0.15s; }
+.add-row select:focus, .add-row input:focus { outline: none; border-color: var(--purple-mid); }
+.btn-add { background: var(--purple); color: var(--white); border: none; padding: 9px 18px; border-radius: 5px; font-size: 13px; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+.btn-add:hover { background: var(--purple-dark); }
+.btn-add:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+.loading { padding: 48px; text-align: center; color: var(--text-light); font-size: 14px; }
+.empty-companies { text-align: center; padding: 48px; color: var(--text-light); }
+.empty-companies p { margin-bottom: 12px; }
+.err-inline { font-size: 12px; color: var(--error-text); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <a href="/portal/" class="portal-brand">
+    <span class="portal-brand-name">AI Learning Lab</span>
+    <span class="portal-brand-sub">Organizer Portal</span>
+  </a>
+  <div class="header-right">
+    <nav class="header-nav">
+      <a href="/portal/">Meetings</a>
+      <a href="/portal/cohorts/">Cohorts</a>
+      <a href="/portal/assignments/" class="active">Assignments</a>
+    </nav>
+    <span class="user-email" id="user-email"></span>
+    <button class="btn-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="portal-main">
+  <h1 class="page-title">Assignments</h1>
+  <p class="page-sub">Assign cohort students to companies and manage company contacts for portal access.</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-students" onclick="switchTab('students')">Student Assignments</button>
+    <button class="tab" id="tab-contacts" onclick="switchTab('contacts')">Company Contacts</button>
+    <button class="tab" id="tab-companies" onclick="switchTab('companies')">Manage Companies</button>
+  </div>
+
+  <div id="tab-students-panel"><div class="loading">Loading…</div></div>
+  <div id="tab-contacts-panel" style="display:none;"><div class="loading">Loading…</div></div>
+  <div id="tab-companies-panel" style="display:none;"><div class="loading">Loading…</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var _companies = [];
+var _cohortMembers = [];  // {name, email}
+var _assignments = [];    // {id, student_email, student_name, company_id}
+var _contacts = [];       // {id, company_id, email, name}
+
+async function init() {
+  var { data: { session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = '/portal/login/'; return; }
+  document.getElementById('user-email').textContent = session.user.email;
+  document.getElementById('signout-btn').addEventListener('click', async function() {
+    await _sb.auth.signOut(); window.location.href = '/portal/login/';
+  });
+
+  // Load all data in parallel
+  var [coRes, cohRes, asgRes, conRes] = await Promise.all([
+    _sb.from('companies').select('id,name,slug,sector').eq('active', true).order('name'),
+    _sb.from('cohorts').select('members').order('created_at', { ascending: false }),
+    _sb.from('student_assignments').select('*'),
+    _sb.from('company_contacts').select('*')
+  ]);
+
+  _companies = coRes.data || [];
+  _assignments = asgRes.data || [];
+  _contacts = conRes.data || [];
+
+  // Flatten all cohort members (deduplicate by email)
+  var seen = {};
+  if (cohRes.data) {
+    cohRes.data.forEach(function(c) {
+      if (!Array.isArray(c.members)) return;
+      c.members.forEach(function(m) {
+        var k = (m.email || '').toLowerCase();
+        if (k && !seen[k]) { seen[k] = true; _cohortMembers.push({ name: m.name, email: k }); }
+      });
+    });
+  }
+
+  renderStudentsTab();
+  renderContactsTab();
+  renderCompaniesTab();
+}
+
+function switchTab(tab) {
+  ['students','contacts','companies'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t + '-panel').style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ── Students tab ──────────────────────────────────────────────────────────────
+
+function renderStudentsTab() {
+  var panel = document.getElementById('tab-students-panel');
+  if (!_companies.length) { panel.innerHTML = '<div class="empty-companies"><p>No companies found. Add companies in the "Manage Companies" tab first.</p></div>'; return; }
+
+  panel.innerHTML = _companies.map(function(co) {
+    var assigned = _assignments.filter(function(a) { return a.company_id === co.id; });
+    var count = assigned.length;
+    return companyBlock('s-' + co.id, co.name, count + ' student' + (count !== 1 ? 's' : '') + ' assigned', renderStudentRows(co, assigned));
+  }).join('');
+}
+
+function renderStudentRows(co, assigned) {
+  var rows = assigned.map(function(a) {
+    return '<div class="assign-row" id="ar-' + a.id + '">' +
+      '<div class="assign-row-info"><div class="assign-name">' + esc(a.student_name || '–') + '</div><div class="assign-email">' + esc(a.student_email) + '</div></div>' +
+      '<div></div>' +
+      '<button class="btn-remove" onclick="removeAssignment(\'' + a.id + '\')">Remove</button>' +
+    '</div>';
+  }).join('');
+
+  // Unassigned cohort members for this company's dropdown
+  var assignedEmails = _assignments.map(function(a) { return a.student_email; });
+  var available = _cohortMembers.filter(function(m) { return !assignedEmails.includes(m.email); });
+  var options = available.map(function(m) {
+    return '<option value="' + escA(m.email) + '" data-name="' + escA(m.name) + '">' + esc(m.name) + ' (' + esc(m.email) + ')</option>';
+  }).join('');
+
+  var addForm = '<div class="add-form">' +
+    '<div class="add-row">' +
+      '<select id="sel-student-' + co.id + '"><option value="">— Select cohort member —</option>' + options + '</select>' +
+      '<button class="btn-add" onclick="addAssignment(\'' + co.id + '\')">Assign</button>' +
+    '</div>' +
+    '<div id="err-s-' + co.id + '" class="err-inline"></div>' +
+  '</div>';
+
+  return rows + '<hr class="section-divider">' + addForm;
+}
+
+async function addAssignment(companyId) {
+  var sel = document.getElementById('sel-student-' + companyId);
+  var email = sel.value;
+  if (!email) return;
+  var opt = sel.options[sel.selectedIndex];
+  var name = opt.dataset.name || '';
+
+  var r = await _sb.from('student_assignments').insert({ student_email: email, student_name: name, company_id: companyId }).select().single();
+  if (r.error) { document.getElementById('err-s-' + companyId).textContent = r.error.message; return; }
+  _assignments.push(r.data);
+  renderStudentsTab(); renderContactsTab();
+}
+
+async function removeAssignment(id) {
+  if (!confirm('Remove this student assignment?')) return;
+  await _sb.from('student_assignments').delete().eq('id', id);
+  _assignments = _assignments.filter(function(a) { return a.id !== id; });
+  renderStudentsTab();
+}
+
+// ── Contacts tab ──────────────────────────────────────────────────────────────
+
+function renderContactsTab() {
+  var panel = document.getElementById('tab-contacts-panel');
+  if (!_companies.length) { panel.innerHTML = '<div class="empty-companies"><p>No companies found.</p></div>'; return; }
+
+  panel.innerHTML = _companies.map(function(co) {
+    var contacts = _contacts.filter(function(c) { return c.company_id === co.id; });
+    var count = contacts.length;
+    return companyBlock('c-' + co.id, co.name, count + ' contact' + (count !== 1 ? 's' : ''), renderContactRows(co, contacts));
+  }).join('');
+}
+
+function renderContactRows(co, contacts) {
+  var rows = contacts.map(function(c) {
+    return '<div class="assign-row" id="cr-' + c.id + '">' +
+      '<div class="assign-row-info"><div class="assign-name">' + esc(c.name || '–') + '</div><div class="assign-email">' + esc(c.email) + '</div></div>' +
+      '<div></div>' +
+      '<button class="btn-remove" onclick="removeContact(\'' + c.id + '\')">Remove</button>' +
+    '</div>';
+  }).join('');
+
+  var addForm = '<div class="add-form">' +
+    '<div class="add-row">' +
+      '<input type="text" id="con-name-' + co.id + '" placeholder="Contact name">' +
+      '<input type="email" id="con-email-' + co.id + '" placeholder="contact@company.com">' +
+      '<button class="btn-add" onclick="addContact(\'' + co.id + '\')">Add</button>' +
+    '</div>' +
+    '<div id="err-c-' + co.id + '" class="err-inline"></div>' +
+  '</div>';
+
+  return rows + '<hr class="section-divider">' + addForm;
+}
+
+async function addContact(companyId) {
+  var name  = document.getElementById('con-name-'  + companyId).value.trim();
+  var email = document.getElementById('con-email-' + companyId).value.trim().toLowerCase();
+  if (!email) return;
+  document.getElementById('err-c-' + companyId).textContent = '';
+
+  var r = await _sb.from('company_contacts').insert({ company_id: companyId, name: name, email: email }).select().single();
+  if (r.error) { document.getElementById('err-c-' + companyId).textContent = r.error.message; return; }
+  _contacts.push(r.data);
+  document.getElementById('con-name-'  + companyId).value = '';
+  document.getElementById('con-email-' + companyId).value = '';
+  renderContactsTab();
+}
+
+async function removeContact(id) {
+  if (!confirm('Remove this company contact?')) return;
+  await _sb.from('company_contacts').delete().eq('id', id);
+  _contacts = _contacts.filter(function(c) { return c.id !== id; });
+  renderContactsTab();
+}
+
+// ── Companies tab ─────────────────────────────────────────────────────────────
+
+function renderCompaniesTab() {
+  var panel = document.getElementById('tab-companies-panel');
+  var list = _companies.map(function(co) {
+    return '<div class="assign-row" id="co-row-' + co.id + '">' +
+      '<div class="assign-row-info"><div class="assign-name">' + esc(co.name) + '</div><div class="assign-email">/' + esc(co.slug) + (co.sector ? ' · ' + esc(co.sector) : '') + '</div></div>' +
+      '<div></div>' +
+      '<button class="btn-remove" onclick="removeCompany(\'' + co.id + '\',\'' + escA(co.name) + '\')">Remove</button>' +
+    '</div>';
+  }).join('');
+
+  panel.innerHTML = list +
+    '<hr class="section-divider">' +
+    '<div class="sub-label">Add a new company</div>' +
+    '<div class="add-row" style="flex-wrap:wrap;gap:8px;">' +
+      '<input type="text" id="new-co-name" placeholder="Company name" style="min-width:160px;">' +
+      '<input type="text" id="new-co-slug" placeholder="URL slug (e.g. ooma)" style="min-width:120px;">' +
+      '<input type="text" id="new-co-sector" placeholder="Sector (optional)" style="min-width:120px;">' +
+      '<input type="url" id="new-co-logo" placeholder="Logo URL (optional)" style="min-width:160px;">' +
+      '<button class="btn-add" onclick="addCompany()">Add Company</button>' +
+    '</div>' +
+    '<div id="err-co" class="err-inline"></div>';
+}
+
+async function addCompany() {
+  var name   = document.getElementById('new-co-name').value.trim();
+  var slug   = document.getElementById('new-co-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  var sector = document.getElementById('new-co-sector').value.trim();
+  var logo   = document.getElementById('new-co-logo').value.trim();
+  document.getElementById('err-co').textContent = '';
+  if (!name || !slug) { document.getElementById('err-co').textContent = 'Name and slug are required.'; return; }
+
+  var r = await _sb.from('companies').insert({ name: name, slug: slug, sector: sector || null, logo_url: logo || null }).select().single();
+  if (r.error) { document.getElementById('err-co').textContent = r.error.message; return; }
+  _companies.push(r.data);
+  ['new-co-name','new-co-slug','new-co-sector','new-co-logo'].forEach(function(id) { document.getElementById(id).value = ''; });
+  renderStudentsTab(); renderContactsTab(); renderCompaniesTab();
+}
+
+async function removeCompany(id, name) {
+  if (!confirm('Remove company "' + name + '"? This will also remove all associated deliverables, files, assignments, and contacts.')) return;
+  await _sb.from('companies').delete().eq('id', id);
+  _companies = _companies.filter(function(c) { return c.id !== id; });
+  _assignments = _assignments.filter(function(a) { return a.company_id !== id; });
+  _contacts = _contacts.filter(function(c) { return c.company_id !== id; });
+  renderStudentsTab(); renderContactsTab(); renderCompaniesTab();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function companyBlock(uid, name, meta, bodyHtml) {
+  return '<div class="company-block" id="block-' + uid + '">' +
+    '<div class="company-block-header" onclick="toggleBlock(\'' + uid + '\')">' +
+      '<div><div class="company-block-name">' + esc(name) + '</div><div class="company-block-meta">' + esc(meta) + '</div></div>' +
+      '<span class="chevron">▼</span>' +
+    '</div>' +
+    '<div class="company-block-body">' + bodyHtml + '</div>' +
+  '</div>';
+}
+
+function toggleBlock(uid) {
+  document.getElementById('block-' + uid).classList.toggle('open');
+}
+
+function esc(s) { var d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+init();
+</script>
+</body>
+</html>

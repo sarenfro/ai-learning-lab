@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Portal · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83; --purple-dark: #2e1b5e; --purple-mid: #6b4fa0;
+  --purple-tint: #f2eefa; --gold: #b7a57a; --gold-mid: #85754d; --gold-light: #e6dcc6;
+  --white: #ffffff; --off-white: #faf9fd; --gray: #f0eef8;
+  --text: #1c1230; --text-mid: #5a5070; --text-light: #8a84a0; --border: #e0dcf0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background: var(--off-white); }
+
+.portal-header {
+  background: var(--purple-dark); border-bottom: 2px solid var(--gold);
+  padding: 0 40px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { display: flex; flex-direction: column; text-decoration: none; }
+.brand-name { color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; }
+.brand-sub { color: var(--gold); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.user-email { color: rgba(255,255,255,0.6); font-size: 12px; }
+.btn-signout {
+  background: transparent; border: 1px solid rgba(183,165,122,0.45); color: var(--gold-light);
+  padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: background 0.15s;
+}
+.btn-signout:hover { background: rgba(183,165,122,0.12); }
+
+.page-main { max-width: 860px; margin: 0 auto; padding: 48px 40px 80px; }
+
+/* Company banner */
+.assignment-banner {
+  background: var(--purple-dark); border-radius: 8px;
+  padding: 24px 28px; margin-bottom: 36px;
+  display: flex; align-items: center; gap: 20px;
+}
+.assignment-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); opacity: 0.8; margin-bottom: 4px; }
+.assignment-company { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--white); }
+.assignment-sector { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+/* Not-assigned state */
+.not-assigned {
+  background: var(--white); border: 1px solid var(--border); border-radius: 8px;
+  padding: 48px; text-align: center; display: none;
+}
+.not-assigned h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--purple-dark); margin-bottom: 10px; }
+.not-assigned p { color: var(--text-mid); font-size: 15px; line-height: 1.6; }
+
+/* Deliverable cards */
+.section-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-mid); margin-bottom: 16px; }
+
+.del-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+
+.del-header { background: var(--purple-dark); padding: 18px 28px; display: flex; align-items: center; gap: 20px; }
+.del-week-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 700; color: var(--gold); opacity: 0.55; line-height: 1; width: 32px; flex-shrink: 0; }
+.del-header-text h3 { color: var(--white); font-size: 15px; font-weight: 600; }
+.del-tag { display: inline-block; margin-top: 5px; background: rgba(183,165,122,0.18); color: var(--gold-light); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 3px; }
+
+.del-body { padding: 24px 28px; }
+
+.field-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; }
+
+.notes-textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 5px;
+  padding: 12px 14px; font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px; color: var(--text); background: var(--off-white);
+  outline: none; resize: vertical; min-height: 80px; line-height: 1.65;
+  margin-bottom: 22px; transition: border-color 0.2s;
+}
+.notes-textarea:focus { border-color: var(--purple); background: var(--white); }
+.notes-textarea::placeholder { color: var(--text-light); }
+
+/* Files */
+.files-section { margin-bottom: 20px; }
+.file-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+.file-row {
+  display: grid; grid-template-columns: auto 1fr auto auto;
+  align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--off-white);
+  border: 1px solid var(--border); border-radius: 5px;
+}
+.file-icon { width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.file-icon.pdf  { background: #fde8e8; color: #b91c1c; }
+.file-icon.docx, .file-icon.doc  { background: #dbeafe; color: #1d4ed8; }
+.file-icon.pptx, .file-icon.ppt  { background: #ffedd5; color: #c2410c; }
+.file-icon.other { background: var(--gray); color: var(--text-light); }
+
+.file-name-link { font-size: 14px; color: var(--purple); text-decoration: none; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.file-name-link:hover { text-decoration: underline; }
+
+.file-comment-input {
+  border: none; border-bottom: 1.5px solid var(--border);
+  padding: 4px 0; font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px; color: var(--text-mid); background: transparent; outline: none;
+  min-width: 120px; transition: border-color 0.2s;
+}
+.file-comment-input:focus { border-bottom-color: var(--purple); }
+.file-comment-input::placeholder { color: var(--text-light); font-style: italic; }
+
+.file-del-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 18px; padding: 0 2px; line-height: 1; transition: color 0.15s; }
+.file-del-btn:hover { color: #b91c1c; }
+
+.upload-lbl {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: transparent; border: 1.5px dashed var(--purple-mid);
+  color: var(--purple); padding: 8px 18px; border-radius: 5px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif; transition: background 0.15s;
+}
+.upload-lbl:hover { background: var(--purple-tint); }
+.upload-lbl.busy { opacity: 0.55; pointer-events: none; }
+
+/* Company feedback */
+.feedback-section { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 18px; }
+.feedback-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 10px; }
+.feedback-empty { font-size: 13px; color: var(--text-light); font-style: italic; }
+.comment-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--purple); color: var(--gold); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.comment-bubble { background: var(--gray); border-radius: 0 6px 6px 6px; padding: 10px 14px; flex: 1; }
+.comment-meta { font-size: 11px; color: var(--text-light); margin-bottom: 4px; }
+.comment-meta strong { color: var(--text-mid); }
+.comment-body { font-size: 14px; color: var(--text); line-height: 1.55; }
+
+/* Toast */
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--purple-dark); color: var(--white); padding: 12px 20px; border-radius: 6px; border-left: 3px solid var(--gold); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(10px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; z-index: 1000; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+.page-loading { text-align: center; padding: 80px; color: var(--text-light); font-size: 14px; }
+
+@media (max-width: 640px) {
+  .portal-header { padding: 0 20px; }
+  .page-main { padding: 32px 20px 60px; }
+  .file-row { grid-template-columns: auto 1fr auto; }
+  .file-comment-input { display: none; }
+  .del-header { padding: 14px 20px; }
+  .del-body { padding: 18px 20px; }
+}
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <a href="/" class="brand">
+    <span class="brand-name">AI Learning Lab</span>
+    <span class="brand-sub">Student Portal</span>
+  </a>
+  <div class="header-right">
+    <span class="user-email" id="user-email"></span>
+    <button class="btn-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="page-main">
+  <div id="page-loading" class="page-loading">Loading your dashboard…</div>
+
+  <div id="content" style="display:none;">
+    <div id="assignment-banner" class="assignment-banner">
+      <div>
+        <div class="assignment-label">Your company</div>
+        <div class="assignment-company" id="company-name">–</div>
+        <div class="assignment-sector" id="company-sector"></div>
+      </div>
+    </div>
+
+    <div id="not-assigned" class="not-assigned">
+      <h2>Assignment pending</h2>
+      <p>Your company assignment hasn't been set up yet.<br>Please contact your organizer and check back soon.</p>
+    </div>
+
+    <div id="deliverables-wrap" style="display:none;">
+      <div class="section-eyebrow">Your weekly deliverables</div>
+      <div id="deliverables-container"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+var CID  = '';  // company uuid
+var SLUG = '';  // company slug
+var delivIds = {};  // weekNumber -> deliverable id
+
+var WEEKS = [
+  { n:1, title:'Market Research',    tag:'Exec-ready'        },
+  { n:2, title:'Business Case',       tag:'5–8 slide deck'    },
+  { n:3, title:'Customer Validation', tag:'Primary research'  },
+  { n:4, title:'AI POC / MVP',        tag:'Live demo'         },
+  { n:5, title:'Go-to-Market Plan',   tag:'Actionable roadmap'},
+  { n:6, title:'Demo Day',            tag:'Board-ready'       }
+];
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+async function init() {
+  var { data: { session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = '/student-portal/login/'; return; }
+
+  var email = session.user.email;
+  document.getElementById('user-email').textContent = email;
+  document.getElementById('signout-btn').addEventListener('click', async function() {
+    await _sb.auth.signOut(); window.location.href = '/student-portal/login/';
+  });
+
+  // Verify cohort membership
+  var { data: isMember } = await _sb.rpc('is_cohort_member', { p_email: email });
+  if (!isMember) {
+    await _sb.auth.signOut(); window.location.href = '/student-portal/login/?error=notallowed'; return;
+  }
+
+  document.getElementById('page-loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+
+  // Look up student assignment
+  var { data: asgn } = await _sb.from('student_assignments')
+    .select('company_id').eq('student_email', email).maybeSingle();
+
+  if (!asgn) {
+    document.getElementById('not-assigned').style.display = 'block';
+    return;
+  }
+
+  CID = asgn.company_id;
+
+  // Load company
+  var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();
+  if (co) {
+    SLUG = co.slug;
+    document.getElementById('company-name').textContent = co.name;
+    document.getElementById('company-sector').textContent = co.sector || '';
+  }
+
+  // Load deliverables with files + comments
+  var { data: delivs } = await _sb.from('deliverables')
+    .select('*, deliverable_files(*), deliverable_comments(*)')
+    .eq('company_id', CID).order('week_number');
+
+  var delMap = {};
+  if (delivs) delivs.forEach(function(d) { delMap[d.week_number] = d; delivIds[d.week_number] = d.id; });
+
+  document.getElementById('deliverables-wrap').style.display = 'block';
+  renderDeliverables(delMap);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function renderDeliverables(delMap) {
+  document.getElementById('deliverables-container').innerHTML = WEEKS.map(function(w) {
+    var d     = delMap[w.n] || {};
+    var files = d.deliverable_files || [];
+    var comms = (d.deliverable_comments || []).filter(function(c) { return c.author_type === 'company'; });
+    return delivCard(w, d, files, comms);
+  }).join('');
+
+  WEEKS.forEach(function(w) {
+    var ta = document.getElementById('notes-' + w.n);
+    var ul = document.getElementById('upload-' + w.n);
+    ta.addEventListener('input', function() { db('n' + w.n, function() { saveNotes(w.n); }); });
+    ul.addEventListener('change', function(e) {
+      if (e.target.files.length) handleUpload(w.n, e.target.files);
+      e.target.value = '';
+    });
+  });
+}
+
+function delivCard(w, d, files, comms) {
+  var pad = w.n < 10 ? '0' + w.n : '' + w.n;
+  var filesHtml = files.map(function(f) { return fileRow(f, w.n); }).join('');
+  var feedbackHtml = comms.length
+    ? comms.map(function(c) { return commentRow(c); }).join('')
+    : '<p class="feedback-empty">No feedback yet.</p>';
+
+  return '<div class="del-card" id="del-' + w.n + '">' +
+    '<div class="del-header">' +
+      '<div class="del-week-num">' + pad + '</div>' +
+      '<div class="del-header-text">' +
+        '<h3>Week ' + w.n + ' — ' + esc(w.title) + '</h3>' +
+        '<span class="del-tag">' + esc(w.tag) + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="del-body">' +
+      '<div class="field-label">Notes &amp; summary</div>' +
+      '<textarea id="notes-' + w.n + '" class="notes-textarea" placeholder="Add notes, key findings, or a summary of this week\'s work…">' + esc(d.notes || '') + '</textarea>' +
+      '<div class="files-section">' +
+        '<div class="field-label">Files for this deliverable</div>' +
+        '<div id="files-' + w.n + '" class="file-list">' + filesHtml + '</div>' +
+        '<label id="upload-lbl-' + w.n + '" class="upload-lbl">' +
+          '+ Upload Files' +
+          '<input type="file" id="upload-' + w.n + '" accept=".pdf,.doc,.docx,.ppt,.pptx" multiple style="display:none;">' +
+        '</label>' +
+      '</div>' +
+      '<div class="feedback-section">' +
+        '<div class="feedback-label">Company feedback</div>' +
+        '<div id="feedback-' + w.n + '">' + feedbackHtml + '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function fileRow(f, wn) {
+  var ext = (f.file_name.split('.').pop() || '').toLowerCase();
+  var cls = ['pdf','docx','doc','pptx','ppt'].indexOf(ext) !== -1 ? ext : 'other';
+  return '<div class="file-row" id="fr-' + f.id + '">' +
+    '<div class="file-icon ' + cls + '">' + ext.toUpperCase().slice(0,4) + '</div>' +
+    '<a href="' + escA(f.file_url) + '" target="_blank" rel="noopener" class="file-name-link">' + esc(f.file_name) + '</a>' +
+    '<input type="text" class="file-comment-input" placeholder="Add a comment on this file…" value="' + escA(f.student_comment || '') + '" ' +
+      'onblur="saveFileComment(\'' + f.id + '\', this.value)" ' +
+      'oninput="db(\'fc' + f.id + '\', function(){saveFileComment(\'' + f.id + '\', document.querySelector(\'#fr-' + f.id + ' .file-comment-input\').value)})">' +
+    '<button class="file-del-btn" onclick="deleteFile(\'' + f.id + '\',\'' + escA(f.file_url) + '\')" title="Remove">×</button>' +
+  '</div>';
+}
+
+function commentRow(c) {
+  var initial = (c.author_name || c.author_email || '?')[0].toUpperCase();
+  var date = new Date(c.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  return '<div class="comment-row">' +
+    '<div class="comment-avatar">' + initial + '</div>' +
+    '<div class="comment-bubble">' +
+      '<div class="comment-meta"><strong>' + esc(c.author_name || c.author_email) + '</strong> · ' + date + '</div>' +
+      '<div class="comment-body">' + esc(c.body) + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// ── Save helpers ──────────────────────────────────────────────────────────────
+
+async function saveNotes(n) {
+  var notes = document.getElementById('notes-' + n).value;
+  var r = await _sb.from('deliverables').upsert(
+    { company_id: CID, week_number: n, notes: notes, updated_at: new Date().toISOString() },
+    { onConflict: 'company_id,week_number' }
+  ).select('id').maybeSingle();
+  if (r.data) delivIds[n] = r.data.id;
+  toast('Week ' + n + ' saved');
+}
+
+async function ensureDeliverable(n) {
+  if (delivIds[n]) return delivIds[n];
+  var notes = document.getElementById('notes-' + n).value || '';
+  var r = await _sb.from('deliverables').upsert(
+    { company_id: CID, week_number: n, notes: notes },
+    { onConflict: 'company_id,week_number' }
+  ).select('id').maybeSingle();
+  if (!r.data) throw new Error(r.error ? r.error.message : 'Failed to create deliverable');
+  delivIds[n] = r.data.id;
+  return r.data.id;
+}
+
+async function saveFileComment(fileId, comment) {
+  await _sb.from('deliverable_files').update({ student_comment: comment }).eq('id', fileId);
+  toast('Comment saved');
+}
+
+// ── File upload ───────────────────────────────────────────────────────────────
+
+async function handleUpload(n, files) {
+  var lbl = document.getElementById('upload-lbl-' + n);
+  lbl.classList.add('busy'); lbl.childNodes[0].textContent = 'Uploading…';
+
+  try {
+    var did = await ensureDeliverable(n);
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      var safe = f.name.replace(/[^a-zA-Z0-9._()-]/g, '_');
+      var path = SLUG + '/week-' + n + '/' + Date.now() + '-' + safe;
+      var up = await _sb.storage.from('student-portal').upload(path, f);
+      if (up.error) throw up.error;
+      var url = _sb.storage.from('student-portal').getPublicUrl(path).data.publicUrl;
+      await _sb.from('deliverable_files').insert({
+        deliverable_id: did, file_name: f.name, file_url: url,
+        file_type: f.type, file_size: f.size, student_comment: ''
+      });
+    }
+    // Refresh list
+    var fr = await _sb.from('deliverable_files').select('*').eq('deliverable_id', did).order('created_at');
+    if (fr.data) document.getElementById('files-' + n).innerHTML = fr.data.map(function(f) { return fileRow(f, n); }).join('');
+    toast(files.length === 1 ? '1 file uploaded' : files.length + ' files uploaded');
+  } catch (err) {
+    alert('Upload failed: ' + err.message);
+  } finally {
+    lbl.classList.remove('busy'); lbl.childNodes[0].textContent = '+ Upload Files';
+  }
+}
+
+async function deleteFile(fid, furl) {
+  if (!confirm('Remove this file? This cannot be undone.')) return;
+  var spath = decodeURIComponent((furl.split('/object/public/student-portal/')[1] || '').split('?')[0]);
+  if (spath) await _sb.storage.from('student-portal').remove([spath]);
+  await _sb.from('deliverable_files').delete().eq('id', fid);
+  var row = document.getElementById('fr-' + fid);
+  if (row) row.remove();
+  toast('File removed');
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+var _T = {}, _tT;
+function db(k, fn, ms) { if(_T[k]) clearTimeout(_T[k]); _T[k] = setTimeout(fn, ms||1400); }
+function toast(m) {
+  var el = document.getElementById('toast');
+  el.textContent = m; el.classList.add('show');
+  if (_tT) clearTimeout(_tT);
+  _tT = setTimeout(function() { el.classList.remove('show'); }, 2200);
+}
+function esc(s) { var d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+init();
+</script>
+</body>
+</html>
