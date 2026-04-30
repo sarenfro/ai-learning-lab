@@ -196,27 +196,31 @@ async function init() {
 }
 
 async function showCompanyPicker() {
-  var { data: companies } = await _sb.from('companies').select('id, name, sector').eq('active', true).order('name');
+  var { data: companies } = await _sb.from('companies').select('id, name, sector, logo_url').eq('active', true).order('name');
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
-  var options = (companies || []).map(function(co) {
-    return '<option value="' + escA(co.id) + '">' + esc(co.name) + (co.sector ? ' — ' + esc(co.sector) : '') + '</option>';
+  var cards = (companies || []).map(function(co) {
+    var logo = co.logo_url
+      ? '<img src="' + escA(co.logo_url) + '" alt="" style="width:48px;height:48px;object-fit:contain;">'
+      : '<div style="width:48px;height:48px;border-radius:6px;background:var(--gray);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;">Logo</div>';
+    return '<div onclick="pickCompanyById(\'' + escA(co.id) + '\')" style="display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--white);border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor=\'var(--purple)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="flex-shrink:0;">' + logo + '</div>' +
+      '<div>' +
+        '<div style="font-size:15px;font-weight:600;color:var(--purple-dark);">' + esc(co.name) + '</div>' +
+        (co.sector ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + esc(co.sector) + '</div>' : '') +
+      '</div>' +
+    '</div>';
   }).join('');
   document.getElementById('content').innerHTML =
-    '<div style="max-width:480px;margin:0 auto;padding:60px 0;text-align:center;">' +
-      '<div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-mid);margin-bottom:12px;">Organizer View</div>' +
-      '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:28px;color:var(--purple-dark);margin-bottom:24px;">Select a company to view</h2>' +
-      '<select id="co-picker" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:5px;font-size:15px;font-family:\'IBM Plex Sans\',sans-serif;color:var(--text);background:var(--white);margin-bottom:16px;">' +
-        '<option value="">— Choose a company —</option>' + options +
-      '</select>' +
-      '<button onclick="pickCompany()" style="width:100%;padding:12px;background:var(--purple);color:var(--white);border:none;border-radius:5px;font-size:14px;font-weight:600;font-family:\'IBM Plex Sans\',sans-serif;cursor:pointer;">View Dashboard</button>' +
+    '<div style="max-width:560px;margin:0 auto;padding:48px 0;">' +
+      '<div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-mid);margin-bottom:10px;">Organizer View</div>' +
+      '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:28px;color:var(--purple-dark);margin-bottom:28px;">Select a company to view</h2>' +
+      '<div style="display:flex;flex-direction:column;gap:12px;">' + cards + '</div>' +
     '</div>';
 }
 
-async function pickCompany() {
-  var sel = document.getElementById('co-picker');
-  if (!sel.value) return;
-  CID = sel.value;
+async function pickCompanyById(id) {
+  CID = id;
   document.getElementById('content').innerHTML = '<div class="page-loading">Loading…</div>';
   await loadDashboard();
 }
