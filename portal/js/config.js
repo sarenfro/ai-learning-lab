@@ -20,7 +20,7 @@ var PORTAL_CO_ORGANIZERS = [
 
 // Derived from co-organizers — do not edit this separately.
 // Additional accounts that can log in but are not co-organizers (won't receive meeting invites).
-var PORTAL_ADMIN_EMAILS = ['mbaa@uw.edu'];
+var PORTAL_ADMIN_EMAILS = ['mbaa@uw.edu', 'sarrah.renfro@gmail.com'];
 
 // Derived from co-organizers + admins — do not edit this separately.
 var PORTAL_ALLOWED_EMAILS = PORTAL_CO_ORGANIZERS.map(function(p) {
