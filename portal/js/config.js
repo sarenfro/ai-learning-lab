@@ -4,7 +4,7 @@
 // you prefer not to expose them in git. The anon key is designed to be public,
 // but add portal/js/config.js to .gitignore if you'd rather keep it out of source control.
 
-var SUPABASE_URL = 'https://zlhzmyfbawmvwhiqldxt.supabase.co';
+var SUPABASE_URL = 'https://zlhzmyfbawmvwhjqldxt.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsaHpteWZiYXdtdndoanFsZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjg1MDcsImV4cCI6MjA5MjY0NDUwN30.Q3AlsjU7DElYFC0kOVGv0tN5Vi8Eexftp6vH_5KBOPE';
 
 // Default location pre-filled on new meetings — override per meeting as needed.
