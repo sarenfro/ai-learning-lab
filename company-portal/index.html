@@ -178,15 +178,15 @@ async function init() {
     await _sb.auth.signOut(); window.location.href = '/company-portal/login/';
   });
 
-  // Verify company contact
+  // Verify company contact (organizers bypass this check)
   var { data: contact } = await _sb.from('company_contacts')
     .select('company_id, name').eq('email', email).maybeSingle();
-  if (!contact) {
+  if (!contact && !PORTAL_ALLOWED_EMAILS.includes(email)) {
     await _sb.auth.signOut(); window.location.href = '/company-portal/login/?error=notallowed'; return;
   }
 
-  CID          = contact.company_id;
-  CONTACT_NAME = contact.name || email;
+  CID          = contact ? contact.company_id : '';
+  CONTACT_NAME = contact ? (contact.name || email) : email;
 
   // Load company
   var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();

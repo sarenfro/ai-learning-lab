@@ -78,12 +78,15 @@ form.addEventListener('submit', async function(e) {
 
   btn.disabled = true; btn.textContent = 'Checking…';
 
-  // Verify company contact before sending OTP
-  var check = await _sb.rpc('is_company_contact', { p_email: email });
-  if (check.error || !check.data) {
-    showStatus('error', 'Your email is not registered as a company contact. Please contact your AI Learning Lab organizer.');
-    btn.disabled = false; btn.textContent = 'Send sign-in link';
-    return;
+  // Organizers can also access the company portal
+  var isOrganizer = PORTAL_ALLOWED_EMAILS.includes(email);
+  if (!isOrganizer) {
+    var check = await _sb.rpc('is_company_contact', { p_email: email });
+    if (check.error || !check.data) {
+      showStatus('error', 'Your email is not registered as a company contact. Please contact your AI Learning Lab organizer.');
+      btn.disabled = false; btn.textContent = 'Send sign-in link';
+      return;
+    }
   }
 
   btn.textContent = 'Sending…';

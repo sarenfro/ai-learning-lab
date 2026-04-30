@@ -37,7 +37,12 @@ function fail(msg) {
 }
 
 async function verify(session) {
-  var check = await _sb.rpc('is_company_contact', { p_email: session.user.email });
+  var email = session.user.email;
+  if (PORTAL_ALLOWED_EMAILS.includes(email)) {
+    window.location.href = '/company-portal/';
+    return;
+  }
+  var check = await _sb.rpc('is_company_contact', { p_email: email });
   if (check.error || !check.data) {
     await _sb.auth.signOut();
     fail('Your email is not registered as a company contact.');
