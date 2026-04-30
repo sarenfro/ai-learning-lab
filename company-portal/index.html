@@ -185,20 +185,49 @@ async function init() {
     await _sb.auth.signOut(); window.location.href = '/company-portal/login/?error=notallowed'; return;
   }
 
-  CID          = contact ? contact.company_id : '';
   CONTACT_NAME = contact ? (contact.name || email) : email;
 
-  // Load company
-  var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();
+  if (!contact) {
+    await showCompanyPicker();
+  } else {
+    CID = contact.company_id;
+    await loadDashboard();
+  }
+}
 
-  // Load deliverables + files + comments
+async function showCompanyPicker() {
+  var { data: companies } = await _sb.from('companies').select('id, name, sector').eq('active', true).order('name');
+  document.getElementById('page-loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  var options = (companies || []).map(function(co) {
+    return '<option value="' + escA(co.id) + '">' + esc(co.name) + (co.sector ? ' — ' + esc(co.sector) : '') + '</option>';
+  }).join('');
+  document.getElementById('content').innerHTML =
+    '<div style="max-width:480px;margin:0 auto;padding:60px 0;text-align:center;">' +
+      '<div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-mid);margin-bottom:12px;">Organizer View</div>' +
+      '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:28px;color:var(--purple-dark);margin-bottom:24px;">Select a company to view</h2>' +
+      '<select id="co-picker" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:5px;font-size:15px;font-family:\'IBM Plex Sans\',sans-serif;color:var(--text);background:var(--white);margin-bottom:16px;">' +
+        '<option value="">— Choose a company —</option>' + options +
+      '</select>' +
+      '<button onclick="pickCompany()" style="width:100%;padding:12px;background:var(--purple);color:var(--white);border:none;border-radius:5px;font-size:14px;font-weight:600;font-family:\'IBM Plex Sans\',sans-serif;cursor:pointer;">View Dashboard</button>' +
+    '</div>';
+}
+
+async function pickCompany() {
+  var sel = document.getElementById('co-picker');
+  if (!sel.value) return;
+  CID = sel.value;
+  document.getElementById('content').innerHTML = '<div class="page-loading">Loading…</div>';
+  await loadDashboard();
+}
+
+async function loadDashboard() {
+  var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();
   var { data: delivs } = await _sb.from('deliverables')
     .select('*, deliverable_files(*), deliverable_comments(*)')
     .eq('company_id', CID).order('week_number');
-
   var delMap = {};
   if (delivs) delivs.forEach(function(d) { delMap[d.week_number] = d; });
-
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
   document.getElementById('content').innerHTML = renderPage(co, delMap);
