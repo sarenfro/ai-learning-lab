@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Cohort · Organizer Portal · AI Learning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #4b2e83;
+  --purple-dark: #2e1b5e;
+  --purple-mid: #6b4fa0;
+  --purple-tint: #f2eefa;
+  --gold: #b7a57a;
+  --gold-light: #e6dcc6;
+  --white: #ffffff;
+  --off-white: #faf9fd;
+  --text: #1c1230;
+  --text-mid: #5a5070;
+  --text-light: #8a84a0;
+  --border: #e0dcf0;
+  --error-text: #8b1a1a;
+  --error-bg: #fdf2f2;
+  --error-border: #e8b4b4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--off-white); color: var(--text); }
+
+.portal-header {
+  background: var(--purple-dark);
+  border-bottom: 2px solid var(--gold);
+  padding: 0 40px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.portal-brand { display: flex; flex-direction: column; text-decoration: none; }
+.portal-brand-name { color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; }
+.portal-brand-sub { color: var(--gold); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header-nav { display: flex; gap: 4px; }
+.header-nav a {
+  color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500;
+  text-decoration: none; padding: 6px 12px; border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.header-nav a:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+.header-nav a.active { color: var(--white); background: rgba(255,255,255,0.12); }
+.btn-signout {
+  background: transparent; border: 1px solid rgba(183,165,122,0.45); color: var(--gold-light);
+  padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-signout:hover { background: rgba(183,165,122,0.12); border-color: var(--gold); }
+
+.portal-main { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+.page-header { margin-bottom: 36px; }
+.breadcrumb { font-size: 12px; color: var(--text-light); margin-bottom: 8px; }
+.breadcrumb a { color: var(--purple-mid); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.page-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 600; color: var(--purple-dark); }
+
+.form-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 36px 40px; }
+.form-group { margin-bottom: 24px; }
+label {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-mid); margin-bottom: 7px;
+}
+label .required { color: var(--purple); margin-left: 2px; }
+label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-light); margin-left: 6px; }
+input[type="text"], textarea {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border); border-radius: 5px;
+  font-size: 14px; font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text); background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, textarea:focus {
+  outline: none; border-color: var(--purple-mid);
+  box-shadow: 0 0 0 3px rgba(75,46,131,0.1);
+}
+textarea { resize: vertical; }
+
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* Bulk import */
+.bulk-area { background: var(--off-white); border: 1.5px solid var(--border); border-radius: 6px; padding: 20px; margin-bottom: 24px; }
+.bulk-area label { margin-bottom: 6px; }
+.bulk-area textarea { min-height: 130px; background: var(--white); font-size: 13px; font-family: monospace; }
+.bulk-parse-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.bulk-hint { font-size: 12px; color: var(--text-light); }
+.btn-parse {
+  background: var(--purple-tint); border: 1.5px solid var(--purple-mid);
+  color: var(--purple); padding: 8px 18px; border-radius: 4px;
+  font-size: 13px; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-parse:hover { background: #e0d4f7; }
+
+/* Member rows */
+.members-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.members-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-mid); }
+.member-count { font-size: 12px; color: var(--text-light); }
+
+.member-row {
+  display: grid; grid-template-columns: 1fr 1fr auto;
+  gap: 10px; align-items: center;
+  padding: 10px 14px; border-radius: 5px; margin-bottom: 6px;
+  background: var(--white); border: 1.5px solid var(--border);
+}
+.member-row input {
+  padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 4px;
+  font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text); width: 100%;
+}
+.member-row input:focus { outline: none; border-color: var(--purple-mid); box-shadow: 0 0 0 2px rgba(75,46,131,0.1); }
+.btn-remove-member {
+  background: transparent; border: 1px solid var(--border); color: var(--text-light);
+  width: 30px; height: 30px; border-radius: 4px; font-size: 16px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.btn-remove-member:hover { background: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+.btn-add-member {
+  background: transparent; border: 1.5px dashed var(--border); color: var(--purple-mid);
+  padding: 9px 18px; border-radius: 5px; font-size: 13px; font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; width: 100%;
+  text-align: left; margin-top: 6px; transition: background 0.15s, border-color 0.15s;
+}
+.btn-add-member:hover { background: var(--purple-tint); border-color: var(--purple-mid); border-style: solid; }
+
+.form-error {
+  display: none; padding: 12px 16px; border-radius: 5px; font-size: 14px;
+  background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text);
+  margin-bottom: 20px;
+}
+.form-error.visible { display: block; }
+.form-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border);
+}
+.btn-cancel { color: var(--text-mid); font-size: 14px; text-decoration: none; }
+.btn-cancel:hover { color: var(--purple); }
+.btn-submit {
+  background: var(--purple); color: var(--white); border: none;
+  padding: 12px 28px; border-radius: 5px; font-size: 14px; font-weight: 600;
+  font-family: 'IBM Plex Sans', sans-serif; letter-spacing: 0.03em;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-submit:hover { background: var(--purple-dark); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .form-card { padding: 24px 20px; }
+  .portal-header { padding: 0 20px; }
+  .member-row { grid-template-columns: 1fr auto; }
+  .member-row input:first-child { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <a href="/portal/" class="portal-brand">
+    <span class="portal-brand-name">AI Learning Lab</span>
+    <span class="portal-brand-sub">Organizer Portal</span>
+  </a>
+  <div class="header-right">
+    <nav class="header-nav">
+      <a href="/portal/">Meetings</a>
+      <a href="/portal/cohorts/" class="active">Cohorts</a>
+    </nav>
+    <button class="btn-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="portal-main">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="/portal/">Meetings</a> › <a href="/portal/cohorts/">Cohorts</a> › Edit cohort</div>
+    <h1 id="page-title">Edit cohort</h1>
+  </div>
+
+  <div class="form-card" id="form-container">
+    <div style="text-align:center;padding:48px;color:var(--text-light);font-size:14px;">Loading…</div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/portal/js/config.js"></script>
+<script>
+var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var members = [];
+var cohortId = null;
+
+async function init() {
+  var result = await _supabase.auth.getSession();
+  if (!result.data.session) { window.location.href = '/portal/login/'; return; }
+
+  cohortId = new URLSearchParams(window.location.search).get('id');
+  if (!cohortId) { window.location.href = '/portal/cohorts/'; return; }
+
+  document.getElementById('signout-btn').addEventListener('click', async function() {
+    await _supabase.auth.signOut();
+    window.location.href = '/portal/login/';
+  });
+
+  await loadCohort();
+}
+
+async function loadCohort() {
+  var result = await _supabase.from('cohorts').select('id, name, members').eq('id', cohortId).single();
+  if (result.error || !result.data) {
+    document.getElementById('form-container').innerHTML =
+      '<p style="color:var(--error-text);padding:20px;">Cohort not found.</p>';
+    return;
+  }
+
+  var cohort = result.data;
+  members = Array.isArray(cohort.members) ? cohort.members.map(function(m) {
+    return { name: m.name || '', email: m.email || '' };
+  }) : [];
+
+  document.getElementById('page-title').textContent = 'Edit: ' + cohort.name;
+  renderForm(cohort.name);
+}
+
+function renderForm(cohortName) {
+  var container = document.getElementById('form-container');
+  container.innerHTML =
+    '<form id="cohort-form" novalidate>' +
+
+    '<div class="form-group">' +
+      '<label for="name">Cohort name <span class="required">*</span></label>' +
+      '<input type="text" id="name" name="name" required value="' + escapeAttr(cohortName) + '">' +
+    '</div>' +
+
+    '<hr class="section-divider">' +
+
+    '<div class="bulk-area">' +
+      '<label for="bulk-input">Bulk import <span class="hint">Paste one person per line: Full Name, email@example.com</span></label>' +
+      '<textarea id="bulk-input" placeholder="Jane Smith, jane@example.com&#10;John Doe, john@example.com&#10;..."></textarea>' +
+      '<div class="bulk-parse-row">' +
+        '<span class="bulk-hint">Parsed entries will be added to the member list below.</span>' +
+        '<button type="button" class="btn-parse" id="parse-btn">Import lines</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="members-header">' +
+      '<span class="members-label">Members</span>' +
+      '<span class="member-count" id="member-count">0 members</span>' +
+    '</div>' +
+    '<div id="member-rows"></div>' +
+    '<button type="button" class="btn-add-member" id="add-member-btn">+ Add member</button>' +
+
+    '<div id="form-error" class="form-error"></div>' +
+
+    '<div class="form-footer">' +
+      '<a href="/portal/cohorts/" class="btn-cancel">Cancel</a>' +
+      '<button type="submit" class="btn-submit" id="submit-btn">Save changes</button>' +
+    '</div>' +
+
+    '</form>';
+
+  renderMembers();
+
+  document.getElementById('add-member-btn').addEventListener('click', function() {
+    members.push({ name: '', email: '' });
+    renderMembers();
+  });
+
+  document.getElementById('parse-btn').addEventListener('click', function() {
+    var raw = document.getElementById('bulk-input').value;
+    var lines = raw.split('\n');
+    var added = 0;
+    lines.forEach(function(line) {
+      line = line.trim();
+      if (!line) return;
+      var comma = line.lastIndexOf(',');
+      if (comma === -1) return;
+      var name = line.slice(0, comma).trim();
+      var email = line.slice(comma + 1).trim();
+      if (!name || !email) return;
+      var already = members.some(function(m) { return m.email.toLowerCase() === email.toLowerCase(); });
+      if (already) return;
+      members.push({ name: name, email: email });
+      added++;
+    });
+    document.getElementById('bulk-input').value = '';
+    renderMembers();
+    if (added === 0) {
+      showError('No valid lines found. Make sure each line is: Full Name, email@example.com');
+    } else {
+      clearError();
+    }
+  });
+
+  document.getElementById('cohort-form').addEventListener('submit', handleSubmit);
+}
+
+function renderMembers() {
+  var container = document.getElementById('member-rows');
+  container.innerHTML = members.map(function(m, i) {
+    return '<div class="member-row">' +
+      '<input type="text" placeholder="Full name" value="' + escapeAttr(m.name) + '" ' +
+        'oninput="members[' + i + '].name = this.value">' +
+      '<input type="email" placeholder="Email address" value="' + escapeAttr(m.email) + '" ' +
+        'oninput="members[' + i + '].email = this.value">' +
+      '<button type="button" class="btn-remove-member" onclick="removeMember(' + i + ')" title="Remove">✕</button>' +
+    '</div>';
+  }).join('');
+  var count = members.length;
+  document.getElementById('member-count').textContent = count + ' member' + (count !== 1 ? 's' : '');
+}
+
+function removeMember(idx) {
+  members.splice(idx, 1);
+  renderMembers();
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  clearError();
+
+  var name = document.getElementById('name').value.trim();
+  if (!name) { showError('Cohort name is required.'); return; }
+
+  var validMembers = [];
+  for (var i = 0; i < members.length; i++) {
+    var m = members[i];
+    var hasName = m.name.trim() !== '';
+    var hasEmail = m.email.trim() !== '';
+    if (hasName || hasEmail) {
+      if (!hasName || !hasEmail) {
+        showError('Each member must have both a name and an email address.');
+        return;
+      }
+      validMembers.push({ name: m.name.trim(), email: m.email.trim() });
+    }
+  }
+
+  if (validMembers.length === 0) {
+    showError('Add at least one member.');
+    return;
+  }
+
+  var submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving…';
+
+  var result = await _supabase.from('cohorts').update({ name: name, members: validMembers }).eq('id', cohortId);
+  if (result.error) {
+    showError('Error: ' + result.error.message);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save changes';
+    return;
+  }
+
+  window.location.href = '/portal/cohorts/?success=updated';
+}
+
+function showError(msg) {
+  var el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.className = 'form-error visible';
+}
+
+function clearError() {
+  document.getElementById('form-error').className = 'form-error';
+}
+
+function escapeAttr(str) {
+  return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+init();
+</script>
+</body>
+</html>
