@@ -233,10 +233,10 @@ async function loadMeeting() {
   });
 
   document.getElementById('page-title').textContent = 'Edit: ' + meeting.title;
-  renderForm(meeting);
+  await renderForm(meeting);
 }
 
-function renderForm(meeting) {
+async function renderForm(meeting) {
   var container = document.getElementById('form-container');
   container.innerHTML =
     '<form id="meeting-form" novalidate>' +
