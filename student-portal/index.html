@@ -383,6 +383,7 @@ async function saveNotes(n) {
     { company_id: CID, week_number: n, notes: notes, updated_at: new Date().toISOString() },
     { onConflict: 'company_id,week_number' }
   ).select('id').maybeSingle();
+  if (r.error) { alert('Could not save notes: ' + r.error.message); return; }
   if (r.data) delivIds[n] = r.data.id;
   toast('Week ' + n + ' saved');
 }
