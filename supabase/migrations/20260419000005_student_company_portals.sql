@@ -1,5 +1,29 @@
 -- Student & Company portal auth tables, comments, and helpers
 
+-- ─── Tables first (functions below reference these) ──────────────────────────
+
+-- ─── Student assignments ─────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS student_assignments (
+  id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_email text        NOT NULL,
+  student_name  text        DEFAULT '',
+  company_id    uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  created_at    timestamptz DEFAULT now(),
+  UNIQUE (student_email)
+);
+
+-- ─── Company contacts (portal logins for sponsors / founders) ─────────────────
+
+CREATE TABLE IF NOT EXISTS company_contacts (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  email      text        NOT NULL,
+  name       text        DEFAULT '',
+  created_at timestamptz DEFAULT now(),
+  UNIQUE (email)
+);
+
 -- ─── Helper functions (SECURITY DEFINER bypasses RLS for auth checks) ────────
 
 -- Used by student portal login to verify cohort membership before sending OTP
@@ -29,28 +53,6 @@ AS $$
     WHERE lower(email) = lower(p_email)
   );
 $$;
-
--- ─── Student assignments ─────────────────────────────────────────────────────
-
-CREATE TABLE IF NOT EXISTS student_assignments (
-  id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_email text        NOT NULL,
-  student_name  text        DEFAULT '',
-  company_id    uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  created_at    timestamptz DEFAULT now(),
-  UNIQUE (student_email)
-);
-
--- ─── Company contacts (portal logins for sponsors / founders) ─────────────────
-
-CREATE TABLE IF NOT EXISTS company_contacts (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  company_id uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  email      text        NOT NULL,
-  name       text        DEFAULT '',
-  created_at timestamptz DEFAULT now(),
-  UNIQUE (email)
-);
 
 -- ─── Comments on deliverables (company-authored; students read them) ──────────
 
