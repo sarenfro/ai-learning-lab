@@ -114,6 +114,24 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .btn-post-comment:hover { background: var(--purple-dark); }
 .btn-post-comment:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* Team section */
+.team-section { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 40px; }
+.team-grid { display: flex; flex-direction: column; gap: 12px; }
+.team-member { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--off-white); border: 1px solid var(--border); border-radius: 6px; }
+.team-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--purple); color: var(--gold); font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.team-info { flex: 1; min-width: 0; }
+.team-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.team-class { font-size: 12px; color: var(--text-light); margin-bottom: 3px; }
+.team-email { font-size: 13px; color: var(--purple); text-decoration: none; }
+.team-email:hover { text-decoration: underline; }
+.team-links { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-team-link { display: inline-flex; align-items: center; padding: 6px 13px; border-radius: 4px; font-size: 12px; font-weight: 600; text-decoration: none; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.15s; }
+.btn-linkedin { background: #0a66c2; color: #fff; }
+.btn-linkedin:hover { background: #084d99; }
+.btn-resume { background: var(--purple-tint); color: var(--purple); border: 1px solid var(--border); }
+.btn-resume:hover { background: var(--gray); }
+.no-team { font-size: 14px; color: var(--text-light); font-style: italic; }
+
 /* Toast */
 .toast { position: fixed; bottom: 28px; right: 28px; background: var(--purple-dark); color: var(--white); padding: 12px 20px; border-radius: 6px; border-left: 3px solid var(--gold); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(10px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; z-index: 1000; }
 .toast.show { opacity: 1; transform: translateY(0); }
@@ -226,21 +244,22 @@ async function pickCompanyById(id) {
 }
 
 async function loadDashboard() {
-  var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();
-  var { data: delivs } = await _sb.from('deliverables')
-    .select('*, deliverable_files(*), deliverable_comments(*)')
-    .eq('company_id', CID).order('week_number');
+  var [{ data: co }, { data: delivs }, { data: students }] = await Promise.all([
+    _sb.from('companies').select('*').eq('id', CID).single(),
+    _sb.from('deliverables').select('*, deliverable_files(*), deliverable_comments(*)').eq('company_id', CID).order('week_number'),
+    _sb.from('student_assignments').select('student_name, student_email, graduating_class, linkedin_url, resume_url').eq('company_id', CID).order('student_name')
+  ]);
   var delMap = {};
   if (delivs) delivs.forEach(function(d) { delMap[d.week_number] = d; });
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
-  document.getElementById('content').innerHTML = renderPage(co, delMap);
+  document.getElementById('content').innerHTML = renderPage(co, delMap, students || []);
   document.title = (co ? co.name : 'Company') + ' Portal · AI Learning Lab';
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
-function renderPage(co, delMap) {
+function renderPage(co, delMap, students) {
   var logo = co && co.logo_url
     ? '<img src="' + escA(co.logo_url) + '" alt="logo">'
     : '<div class="company-logo-placeholder">Logo</div>';
@@ -263,8 +282,42 @@ function renderPage(co, delMap) {
   }).join('');
 
   return hero +
+    renderTeamSection(students) +
     '<div class="section-eyebrow">Weekly deliverables</div>' +
     cards;
+}
+
+function renderTeamSection(students) {
+  var inner;
+  if (!students || !students.length) {
+    inner = '<p class="no-team">No students assigned yet.</p>';
+  } else {
+    inner = '<div class="team-grid">' +
+      students.map(function(s) {
+        var initial = (s.student_name || s.student_email || '?')[0].toUpperCase();
+        var links = '';
+        if (s.linkedin_url) {
+          links += '<a href="' + escA(s.linkedin_url) + '" target="_blank" rel="noopener" class="btn-team-link btn-linkedin">LinkedIn</a>';
+        }
+        if (s.resume_url) {
+          links += '<a href="' + escA(s.resume_url) + '" target="_blank" rel="noopener" class="btn-team-link btn-resume">Resume</a>';
+        }
+        return '<div class="team-member">' +
+          '<div class="team-avatar">' + initial + '</div>' +
+          '<div class="team-info">' +
+            '<div class="team-name">' + esc(s.student_name || s.student_email) + '</div>' +
+            (s.graduating_class ? '<div class="team-class">' + esc(s.graduating_class) + '</div>' : '') +
+            (s.student_email ? '<a href="mailto:' + escA(s.student_email) + '" class="team-email">' + esc(s.student_email) + '</a>' : '') +
+          '</div>' +
+          (links ? '<div class="team-links">' + links + '</div>' : '') +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+  return '<div class="team-section">' +
+    '<div class="section-eyebrow" style="margin-bottom:16px;">Student team</div>' +
+    inner +
+  '</div>';
 }
 
 function delivCard(w, d, files, comms) {

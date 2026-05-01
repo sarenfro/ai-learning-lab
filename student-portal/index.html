@@ -130,6 +130,20 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .comment-meta strong { color: var(--text-mid); }
 .comment-body { font-size: 14px; color: var(--text); line-height: 1.55; }
 
+/* Profile card */
+.profile-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 24px 28px; margin-bottom: 36px; }
+.profile-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; }
+.profile-field { display: flex; flex-direction: column; }
+.profile-input { border: 1.5px solid var(--border); border-radius: 5px; padding: 9px 12px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--off-white); outline: none; transition: border-color 0.2s; margin-top: 6px; }
+.profile-input:focus { border-color: var(--purple); background: var(--white); }
+.profile-input::placeholder { color: var(--text-light); }
+.resume-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.resume-link { font-size: 13px; color: var(--purple); text-decoration: none; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resume-link:hover { text-decoration: underline; }
+.btn-resume-upload { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1.5px dashed var(--purple-mid); color: var(--purple); padding: 7px 16px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.15s; white-space: nowrap; }
+.btn-resume-upload:hover { background: var(--purple-tint); }
+.btn-resume-upload.busy { opacity: 0.55; pointer-events: none; }
+
 /* Toast */
 .toast { position: fixed; bottom: 28px; right: 28px; background: var(--purple-dark); color: var(--white); padding: 12px 20px; border-radius: 6px; border-left: 3px solid var(--gold); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(10px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; z-index: 1000; }
 .toast.show { opacity: 1; transform: translateY(0); }
@@ -143,6 +157,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
   .file-comment-input { display: none; }
   .del-header { padding: 14px 20px; }
   .del-body { padding: 18px 20px; }
+  .profile-fields { grid-template-columns: 1fr; }
+  .profile-card { padding: 20px; }
 }
 </style>
 </head>
@@ -171,6 +187,26 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
       </div>
     </div>
 
+    <div id="profile-wrap" style="display:none;">
+      <div class="section-eyebrow">Your profile</div>
+      <div class="profile-card">
+        <div class="profile-fields">
+          <div class="profile-field">
+            <div class="field-label">Graduating class</div>
+            <input id="profile-grad-class" class="profile-input" type="text" placeholder="e.g. MBA 2026">
+          </div>
+          <div class="profile-field">
+            <div class="field-label">LinkedIn URL</div>
+            <input id="profile-linkedin" class="profile-input" type="url" placeholder="https://linkedin.com/in/yourname">
+          </div>
+          <div class="profile-field" style="grid-column: 1 / -1;">
+            <div class="field-label">Resume</div>
+            <div id="resume-area"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="not-assigned" class="not-assigned">
       <h2>Assignment pending</h2>
       <p>Your company assignment hasn't been set up yet.<br>Please contact your organizer and check back soon.</p>
@@ -190,9 +226,10 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 <script>
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-var CID  = '';  // company uuid
-var SLUG = '';  // company slug
-var delivIds = {};  // weekNumber -> deliverable id
+var CID        = '';  // company uuid
+var SLUG       = '';  // company slug
+var ASGN_EMAIL = '';  // student's email, used for profile updates
+var delivIds   = {};  // weekNumber -> deliverable id
 
 var WEEKS = [
   { n:1, title:'Market Research',    tag:'Exec-ready'        },
@@ -224,16 +261,19 @@ async function init() {
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
 
-  // Look up student assignment
+  // Look up student assignment (include profile fields)
   var { data: asgn } = await _sb.from('student_assignments')
-    .select('company_id').eq('student_email', email).maybeSingle();
+    .select('company_id, graduating_class, linkedin_url, resume_url')
+    .eq('student_email', email).maybeSingle();
 
   if (!asgn) {
     document.getElementById('not-assigned').style.display = 'block';
     return;
   }
 
+  ASGN_EMAIL = email;
   CID = asgn.company_id;
+  populateProfile(asgn);
 
   // Load company
   var { data: co } = await _sb.from('companies').select('*').eq('id', CID).single();
@@ -403,6 +443,77 @@ async function deleteFile(fid, furl) {
   var row = document.getElementById('fr-' + fid);
   if (row) row.remove();
   toast('File removed');
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+function populateProfile(asgn) {
+  document.getElementById('profile-grad-class').value = asgn.graduating_class || '';
+  document.getElementById('profile-linkedin').value   = asgn.linkedin_url     || '';
+  renderResumeArea(asgn.resume_url || '');
+  document.getElementById('profile-wrap').style.display = 'block';
+
+  var gcEl = document.getElementById('profile-grad-class');
+  gcEl.addEventListener('blur',  function() { saveGradClass(gcEl.value); });
+  gcEl.addEventListener('input', function() { db('pgc', function() { saveGradClass(gcEl.value); }); });
+
+  var liEl = document.getElementById('profile-linkedin');
+  liEl.addEventListener('blur',  function() { saveLinkedin(liEl.value); });
+  liEl.addEventListener('input', function() { db('pli', function() { saveLinkedin(liEl.value); }); });
+}
+
+function renderResumeArea(url) {
+  var area = document.getElementById('resume-area');
+  var uploadBtn = '<label id="resume-upload-lbl" class="btn-resume-upload">' +
+    (url ? 'Replace resume' : '+ Upload resume') +
+    '<input type="file" id="resume-upload" accept=".pdf,.doc,.docx" style="display:none;">' +
+  '</label>';
+  if (url) {
+    var rawName = decodeURIComponent(url.split('/').pop().split('?')[0]);
+    var displayName = rawName.replace(/^\d+-/, '');
+    area.innerHTML = '<div class="resume-row">' +
+      '<a href="' + escA(url) + '" target="_blank" rel="noopener" class="resume-link">' + esc(displayName) + '</a>' +
+      uploadBtn +
+    '</div>';
+  } else {
+    area.innerHTML = '<div class="resume-row">' + uploadBtn + '</div>';
+  }
+  document.getElementById('resume-upload').addEventListener('change', function(e) {
+    if (e.target.files.length) handleResumeUpload(e.target.files[0]);
+    e.target.value = '';
+  });
+}
+
+async function saveGradClass(val) {
+  var r = await _sb.from('student_assignments').update({ graduating_class: val }).eq('student_email', ASGN_EMAIL);
+  if (!r.error) toast('Profile saved');
+}
+
+async function saveLinkedin(val) {
+  var r = await _sb.from('student_assignments').update({ linkedin_url: val }).eq('student_email', ASGN_EMAIL);
+  if (!r.error) toast('Profile saved');
+}
+
+async function handleResumeUpload(file) {
+  var lbl = document.getElementById('resume-upload-lbl');
+  lbl.classList.add('busy');
+  var origText = lbl.childNodes[0].textContent;
+  lbl.childNodes[0].textContent = 'Uploading…';
+  try {
+    var safe = file.name.replace(/[^a-zA-Z0-9._()-]/g, '_');
+    var path = (SLUG || 'student') + '/resume/' + Date.now() + '-' + safe;
+    var up = await _sb.storage.from('student-portal').upload(path, file);
+    if (up.error) throw up.error;
+    var url = _sb.storage.from('student-portal').getPublicUrl(path).data.publicUrl;
+    var r = await _sb.from('student_assignments').update({ resume_url: url }).eq('student_email', ASGN_EMAIL);
+    if (r.error) throw r.error;
+    renderResumeArea(url);
+    toast('Resume uploaded');
+  } catch (err) {
+    alert('Upload failed: ' + err.message);
+    var lbl2 = document.getElementById('resume-upload-lbl');
+    if (lbl2) { lbl2.classList.remove('busy'); lbl2.childNodes[0].textContent = origText; }
+  }
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
