@@ -55,6 +55,9 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--off-white); c
 
 /* Assignment rows */
 .assign-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 8px; padding: 10px 12px; background: var(--off-white); border: 1px solid var(--border); border-radius: 5px; }
+.linkedin-input { border: 1.5px solid var(--border); border-radius: 4px; padding: 5px 9px; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; color: var(--text); background: var(--white); outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+.linkedin-input:focus { border-color: var(--purple); }
+.linkedin-input::placeholder { color: var(--text-light); }
 .assign-row-info { min-width: 0; }
 .assign-name { font-size: 14px; font-weight: 500; color: var(--text); }
 .assign-email { font-size: 12px; color: var(--text-light); }
@@ -186,7 +189,7 @@ function renderStudentRows(co, assigned) {
   var rows = assigned.map(function(a) {
     return '<div class="assign-row" id="ar-' + a.id + '">' +
       '<div class="assign-row-info"><div class="assign-name">' + esc(a.student_name || '–') + '</div><div class="assign-email">' + esc(a.student_email) + '</div></div>' +
-      '<div></div>' +
+      '<input class="linkedin-input" type="url" placeholder="LinkedIn URL" value="' + escA(a.linkedin_url || '') + '" onchange="saveLinkedin(\'' + escA(a.student_email) + '\', this.value)">' +
       '<button class="btn-remove" onclick="removeAssignment(\'' + a.id + '\')">Remove</button>' +
     '</div>';
   }).join('');
@@ -227,6 +230,13 @@ async function removeAssignment(id) {
   await _sb.from('student_assignments').delete().eq('id', id);
   _assignments = _assignments.filter(function(a) { return a.id !== id; });
   renderStudentsTab();
+}
+
+async function saveLinkedin(email, url) {
+  var r = await _sb.from('student_assignments').update({ linkedin_url: url }).eq('student_email', email);
+  if (r.error) { alert('Could not save LinkedIn: ' + r.error.message); return; }
+  var a = _assignments.find(function(x) { return x.student_email === email; });
+  if (a) a.linkedin_url = url;
 }
 
 // ── Contacts tab ──────────────────────────────────────────────────────────────

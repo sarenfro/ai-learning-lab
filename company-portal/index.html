@@ -130,6 +130,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .btn-linkedin:hover { background: #084d99; }
 .btn-resume { background: var(--purple-tint); color: var(--purple); border: 1px solid var(--border); }
 .btn-resume:hover { background: var(--gray); }
+.btn-resume-disabled { background: var(--off-white); color: var(--text-light); border: 1px solid var(--border); cursor: default; opacity: 0.6; }
 .no-team { font-size: 14px; color: var(--text-light); font-style: italic; }
 
 /* Toast */
@@ -301,6 +302,8 @@ function renderTeamSection(students) {
         }
         if (s.resume_url) {
           links += '<a href="' + escA(s.resume_url) + '" target="_blank" rel="noopener" class="btn-team-link btn-resume">Resume</a>';
+        } else {
+          links += '<span class="btn-team-link btn-resume-disabled">Resume</span>';
         }
         return '<div class="team-member">' +
           '<div class="team-avatar">' + initial + '</div>' +
@@ -309,7 +312,7 @@ function renderTeamSection(students) {
             (s.graduating_class ? '<div class="team-class">' + esc(s.graduating_class) + '</div>' : '') +
             (s.student_email ? '<a href="mailto:' + escA(s.student_email) + '" class="team-email">' + esc(s.student_email) + '</a>' : '') +
           '</div>' +
-          (links ? '<div class="team-links">' + links + '</div>' : '') +
+          '<div class="team-links">' + links + '</div>' +
         '</div>';
       }).join('') +
     '</div>';

@@ -487,12 +487,12 @@ function renderResumeArea(url) {
 
 async function saveGradClass(val) {
   var r = await _sb.from('student_assignments').update({ graduating_class: val }).eq('student_email', ASGN_EMAIL);
-  if (!r.error) toast('Profile saved');
+  if (r.error) { alert('Could not save: ' + r.error.message); } else { toast('Profile saved'); }
 }
 
 async function saveLinkedin(val) {
   var r = await _sb.from('student_assignments').update({ linkedin_url: val }).eq('student_email', ASGN_EMAIL);
-  if (!r.error) toast('Profile saved');
+  if (r.error) { alert('Could not save: ' + r.error.message); } else { toast('Profile saved'); }
 }
 
 async function handleResumeUpload(file) {
