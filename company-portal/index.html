@@ -75,6 +75,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .file-icon.pdf  { background: #fde8e8; color: #b91c1c; }
 .file-icon.docx, .file-icon.doc  { background: #dbeafe; color: #1d4ed8; }
 .file-icon.pptx, .file-icon.ppt  { background: #ffedd5; color: #c2410c; }
+.file-icon.xlsx, .file-icon.xls  { background: #dcfce7; color: #15803d; }
+.file-icon.img  { background: #f3e8ff; color: #7e22ce; }
 .file-icon.other { background: var(--gray); color: var(--text-light); }
 .file-info { flex: 1; min-width: 0; }
 .file-name-link { font-size: 14px; color: var(--purple); text-decoration: none; font-weight: 600; display: block; margin-bottom: 4px; }
@@ -98,6 +100,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .preview-close { background: none; border: none; font-size: 22px; color: var(--text-light); cursor: pointer; padding: 0 2px; line-height: 1; }
 .preview-close:hover { color: var(--text); }
 .preview-frame { flex: 1; border: none; width: 100%; background: var(--off-white); }
+.preview-img { flex: 1; width: 100%; object-fit: contain; padding: 24px; box-sizing: border-box; background: var(--off-white); }
 .no-files { font-size: 14px; color: var(--text-light); font-style: italic; margin-bottom: 24px; }
 
 /* Comments */
@@ -175,6 +178,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
       <button class="preview-close" onclick="closePreview()" title="Close">×</button>
     </div>
     <iframe id="preview-frame" class="preview-frame" src="" allowfullscreen></iframe>
+    <img id="preview-img" class="preview-img" src="" style="display:none;" alt="">
   </div>
 </div>
 
@@ -362,7 +366,9 @@ function delivCard(w, d, files, comms) {
   // Files
   var filesHtml = files.length ? files.map(function(f) {
     var ext = (f.file_name.split('.').pop() || '').toLowerCase();
-    var cls = ['pdf','docx','doc','pptx','ppt'].indexOf(ext) !== -1 ? ext : 'other';
+    var imgExts = ['jpg','jpeg','png','gif','webp'];
+    var cls = ['pdf','docx','doc','pptx','ppt','xlsx','xls'].indexOf(ext) !== -1 ? ext :
+              imgExts.indexOf(ext) !== -1 ? 'img' : 'other';
     var comment = f.student_comment && f.student_comment.trim()
       ? '<div class="file-student-comment">' + esc(f.student_comment) + '</div>'
       : '<div class="file-student-comment empty">No note added.</div>';
@@ -497,13 +503,23 @@ function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); 
 function openPreview(url, name, ext) {
   var modal = document.getElementById('preview-modal');
   var frame = document.getElementById('preview-frame');
+  var img   = document.getElementById('preview-img');
   document.getElementById('preview-title').textContent = name;
   document.getElementById('preview-open-link').href = url;
-  frame.src = '';
+  frame.src = ''; frame.style.display = 'none';
+  img.src   = ''; img.style.display   = 'none';
+
+  var imgExts    = ['jpg','jpeg','png','gif','webp'];
   var officeExts = ['doc','docx','ppt','pptx','xls','xlsx'];
-  frame.src = officeExts.indexOf(ext) !== -1
-    ? 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url)
-    : url;
+  if (imgExts.indexOf(ext) !== -1) {
+    img.src = url; img.style.display = 'block';
+  } else if (officeExts.indexOf(ext) !== -1) {
+    frame.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url);
+    frame.style.display = '';
+  } else {
+    frame.src = url; frame.style.display = '';
+  }
+
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -512,6 +528,7 @@ function closePreview(e) {
   if (e && e.target !== document.getElementById('preview-modal')) return;
   document.getElementById('preview-modal').classList.remove('open');
   document.getElementById('preview-frame').src = '';
+  document.getElementById('preview-img').src = '';
   document.body.style.overflow = '';
 }
 

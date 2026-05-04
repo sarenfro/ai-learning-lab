@@ -92,6 +92,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .file-icon.pdf  { background: #fde8e8; color: #b91c1c; }
 .file-icon.docx, .file-icon.doc  { background: #dbeafe; color: #1d4ed8; }
 .file-icon.pptx, .file-icon.ppt  { background: #ffedd5; color: #c2410c; }
+.file-icon.xlsx, .file-icon.xls  { background: #dcfce7; color: #15803d; }
+.file-icon.img  { background: #f3e8ff; color: #7e22ce; }
 .file-icon.other { background: var(--gray); color: var(--text-light); }
 
 .file-name-link { font-size: 14px; color: var(--purple); text-decoration: none; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -122,6 +124,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .preview-close { background: none; border: none; font-size: 22px; color: var(--text-light); cursor: pointer; padding: 0 2px; line-height: 1; }
 .preview-close:hover { color: var(--text); }
 .preview-frame { flex: 1; border: none; width: 100%; background: var(--off-white); }
+.preview-img { flex: 1; width: 100%; object-fit: contain; padding: 24px; box-sizing: border-box; background: var(--off-white); }
+.upload-hint { margin: 6px 0 0; font-size: 12px; color: var(--text-light); }
 .preview-loading { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-light); }
 
 .upload-lbl {
@@ -188,6 +192,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
       <button class="preview-close" onclick="closePreview()" title="Close">×</button>
     </div>
     <iframe id="preview-frame" class="preview-frame" src="" allowfullscreen></iframe>
+    <img id="preview-img" class="preview-img" src="" style="display:none;" alt="">
   </div>
 </div>
 
@@ -367,8 +372,9 @@ function delivCard(w, d, files, comms) {
         '<div id="files-' + w.n + '" class="file-list">' + filesHtml + '</div>' +
         '<label id="upload-lbl-' + w.n + '" class="upload-lbl">' +
           '+ Upload Files' +
-          '<input type="file" id="upload-' + w.n + '" accept=".pdf,.doc,.docx,.ppt,.pptx" multiple style="display:none;">' +
+          '<input type="file" id="upload-' + w.n + '" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" multiple style="display:none;">' +
         '</label>' +
+        '<p class="upload-hint">Accepted: PDF, Word, PowerPoint, Excel, JPG, PNG, GIF, WEBP</p>' +
         '<p id="upload-err-' + w.n + '" class="upload-err"></p>' +
       '</div>' +
       '<div class="feedback-section">' +
@@ -381,7 +387,9 @@ function delivCard(w, d, files, comms) {
 
 function fileRow(f, wn) {
   var ext = (f.file_name.split('.').pop() || '').toLowerCase();
-  var cls = ['pdf','docx','doc','pptx','ppt'].indexOf(ext) !== -1 ? ext : 'other';
+  var imgExts = ['jpg','jpeg','png','gif','webp'];
+  var cls = ['pdf','docx','doc','pptx','ppt','xlsx','xls'].indexOf(ext) !== -1 ? ext :
+            imgExts.indexOf(ext) !== -1 ? 'img' : 'other';
   return '<div class="file-row" id="fr-' + f.id + '">' +
     '<div class="file-icon ' + cls + '">' + ext.toUpperCase().slice(0,4) + '</div>' +
     '<a href="' + escA(f.file_url) + '" target="_blank" rel="noopener" class="file-name-link">' + esc(f.file_name) + '</a>' +
@@ -567,18 +575,21 @@ async function handleResumeUpload(file) {
 function openPreview(url, name, ext) {
   var modal = document.getElementById('preview-modal');
   var frame = document.getElementById('preview-frame');
-  var title = document.getElementById('preview-title');
-  var link  = document.getElementById('preview-open-link');
+  var img   = document.getElementById('preview-img');
+  document.getElementById('preview-title').textContent = name;
+  document.getElementById('preview-open-link').href = url;
+  frame.src = ''; frame.style.display = 'none';
+  img.src   = ''; img.style.display   = 'none';
 
-  title.textContent = name;
-  link.href = url;
-  frame.src = '';
-
+  var imgExts    = ['jpg','jpeg','png','gif','webp'];
   var officeExts = ['doc','docx','ppt','pptx','xls','xlsx'];
-  if (officeExts.indexOf(ext) !== -1) {
+  if (imgExts.indexOf(ext) !== -1) {
+    img.src = url; img.style.display = 'block';
+  } else if (officeExts.indexOf(ext) !== -1) {
     frame.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url);
+    frame.style.display = '';
   } else {
-    frame.src = url;
+    frame.src = url; frame.style.display = '';
   }
 
   modal.classList.add('open');
@@ -589,6 +600,7 @@ function closePreview(e) {
   if (e && e.target !== document.getElementById('preview-modal')) return;
   document.getElementById('preview-modal').classList.remove('open');
   document.getElementById('preview-frame').src = '';
+  document.getElementById('preview-img').src = '';
   document.body.style.overflow = '';
 }
 
