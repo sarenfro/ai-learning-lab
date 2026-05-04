@@ -81,6 +81,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .file-name-link:hover { text-decoration: underline; }
 .file-student-comment { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
 .file-student-comment.empty { color: var(--text-light); font-style: italic; }
+.file-dl-btn { flex-shrink: 0; align-self: center; background: none; border: 1.5px solid var(--purple-mid); color: var(--purple); font-size: 12px; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif; padding: 5px 12px; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.file-dl-btn:hover { background: var(--purple-tint); }
 .no-files { font-size: 14px; color: var(--text-light); font-style: italic; margin-bottom: 24px; }
 
 /* Comments */
@@ -338,12 +340,14 @@ function delivCard(w, d, files, comms) {
     var comment = f.student_comment && f.student_comment.trim()
       ? '<div class="file-student-comment">' + esc(f.student_comment) + '</div>'
       : '<div class="file-student-comment empty">No note added.</div>';
+    var dlName = 'UW_AILAB_' + f.file_name;
     return '<div class="file-item">' +
       '<div class="file-icon ' + cls + '">' + ext.toUpperCase().slice(0,4) + '</div>' +
       '<div class="file-info">' +
         '<a href="' + escA(f.file_url) + '" target="_blank" rel="noopener" class="file-name-link">' + esc(f.file_name) + '</a>' +
         comment +
       '</div>' +
+      '<button class="file-dl-btn" onclick="downloadFile(\'' + escA(f.file_url) + '\',\'' + escA(dlName) + '\')" title="Download as ' + escA(dlName) + '">&#8595; Download</button>' +
     '</div>';
   }).join('') : '<p class="no-files">No files uploaded yet.</p>';
 
@@ -460,6 +464,23 @@ function toast(m) {
 }
 function esc(s) { var d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+async function downloadFile(url, name) {
+  try {
+    var res = await fetch(url);
+    if (!res.ok) throw new Error('Could not fetch file');
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    alert('Download failed: ' + err.message);
+  }
+}
 
 init();
 </script>
