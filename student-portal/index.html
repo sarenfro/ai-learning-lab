@@ -83,7 +83,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 .file-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 
 .file-row {
-  display: grid; grid-template-columns: auto 1fr auto auto;
+  display: grid; grid-template-columns: auto 1fr auto auto auto;
   align-items: center; gap: 12px;
   padding: 10px 14px; background: var(--off-white);
   border: 1px solid var(--border); border-radius: 5px;
@@ -108,6 +108,21 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 
 .file-del-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 18px; padding: 0 2px; line-height: 1; transition: color 0.15s; }
 .file-del-btn:hover { color: #b91c1c; }
+.file-preview-btn { background: none; border: none; color: var(--purple-mid); cursor: pointer; font-size: 14px; padding: 0 4px; line-height: 1; transition: color 0.15s; flex-shrink: 0; }
+.file-preview-btn:hover { color: var(--purple); }
+
+/* Document preview modal */
+.preview-modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.55); align-items: center; justify-content: center; }
+.preview-modal.open { display: flex; }
+.preview-box { background: var(--white); border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; width: min(90vw, 960px); height: min(88vh, 800px); overflow: hidden; }
+.preview-header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.preview-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview-open-link { font-size: 12px; color: var(--purple); text-decoration: none; white-space: nowrap; }
+.preview-open-link:hover { text-decoration: underline; }
+.preview-close { background: none; border: none; font-size: 22px; color: var(--text-light); cursor: pointer; padding: 0 2px; line-height: 1; }
+.preview-close:hover { color: var(--text); }
+.preview-frame { flex: 1; border: none; width: 100%; background: var(--off-white); }
+.preview-loading { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-light); }
 
 .upload-lbl {
   display: inline-flex; align-items: center; gap: 7px;
@@ -154,7 +169,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 @media (max-width: 640px) {
   .portal-header { padding: 0 20px; }
   .page-main { padding: 32px 20px 60px; }
-  .file-row { grid-template-columns: auto 1fr auto; }
+  .file-row { grid-template-columns: auto 1fr auto auto; }
   .file-comment-input { display: none; }
   .del-header { padding: 14px 20px; }
   .del-body { padding: 18px 20px; }
@@ -164,6 +179,17 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 </style>
 </head>
 <body>
+
+<div id="preview-modal" class="preview-modal" onclick="closePreview(event)">
+  <div class="preview-box">
+    <div class="preview-header">
+      <div class="preview-title" id="preview-title"></div>
+      <a id="preview-open-link" href="#" target="_blank" rel="noopener" class="preview-open-link">Open in new tab ↗</a>
+      <button class="preview-close" onclick="closePreview()" title="Close">×</button>
+    </div>
+    <iframe id="preview-frame" class="preview-frame" src="" allowfullscreen></iframe>
+  </div>
+</div>
 
 <header class="portal-header">
   <a href="/" class="brand">
@@ -359,6 +385,7 @@ function fileRow(f, wn) {
   return '<div class="file-row" id="fr-' + f.id + '">' +
     '<div class="file-icon ' + cls + '">' + ext.toUpperCase().slice(0,4) + '</div>' +
     '<a href="' + escA(f.file_url) + '" target="_blank" rel="noopener" class="file-name-link">' + esc(f.file_name) + '</a>' +
+    '<button class="file-preview-btn" onclick="openPreview(\'' + escA(f.file_url) + '\',\'' + escA(f.file_name) + '\',\'' + ext + '\')" title="Preview">&#128269;</button>' +
     '<input type="text" class="file-comment-input" placeholder="Add a comment on this file…" value="' + escA(f.student_comment || '') + '" ' +
       'onblur="saveFileComment(\'' + f.id + '\', this.value)" ' +
       'oninput="db(\'fc' + f.id + '\', function(){saveFileComment(\'' + f.id + '\', document.querySelector(\'#fr-' + f.id + ' .file-comment-input\').value)})">' +
@@ -534,6 +561,40 @@ async function handleResumeUpload(file) {
     if (lbl2) { lbl2.classList.remove('busy'); lbl2.childNodes[0].textContent = origText; }
   }
 }
+
+// ── Document preview ─────────────────────────────────────────────────────────
+
+function openPreview(url, name, ext) {
+  var modal = document.getElementById('preview-modal');
+  var frame = document.getElementById('preview-frame');
+  var title = document.getElementById('preview-title');
+  var link  = document.getElementById('preview-open-link');
+
+  title.textContent = name;
+  link.href = url;
+  frame.src = '';
+
+  var officeExts = ['doc','docx','ppt','pptx','xls','xlsx'];
+  if (officeExts.indexOf(ext) !== -1) {
+    frame.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url);
+  } else {
+    frame.src = url;
+  }
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview(e) {
+  if (e && e.target !== document.getElementById('preview-modal')) return;
+  document.getElementById('preview-modal').classList.remove('open');
+  document.getElementById('preview-frame').src = '';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closePreview();
+});
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
