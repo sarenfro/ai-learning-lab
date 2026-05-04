@@ -118,6 +118,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background:
 }
 .upload-lbl:hover { background: var(--purple-tint); }
 .upload-lbl.busy { opacity: 0.55; pointer-events: none; }
+.upload-err { margin: 6px 0 0; font-size: 13px; color: #b91c1c; min-height: 0; }
 
 /* Company feedback */
 .feedback-section { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 18px; }
@@ -310,8 +311,9 @@ function renderDeliverables(delMap) {
     var ul = document.getElementById('upload-' + w.n);
     ta.addEventListener('input', function() { db('n' + w.n, function() { saveNotes(w.n); }); });
     ul.addEventListener('change', function(e) {
-      if (e.target.files.length) handleUpload(w.n, e.target.files);
+      var picked = Array.from(e.target.files);
       e.target.value = '';
+      if (picked.length) handleUpload(w.n, picked);
     });
   });
 }
@@ -341,6 +343,7 @@ function delivCard(w, d, files, comms) {
           '+ Upload Files' +
           '<input type="file" id="upload-' + w.n + '" accept=".pdf,.doc,.docx,.ppt,.pptx" multiple style="display:none;">' +
         '</label>' +
+        '<p id="upload-err-' + w.n + '" class="upload-err"></p>' +
       '</div>' +
       '<div class="feedback-section">' +
         '<div class="feedback-label">Company feedback</div>' +
@@ -410,6 +413,8 @@ async function saveFileComment(fileId, comment) {
 async function handleUpload(n, files) {
   var lbl = document.getElementById('upload-lbl-' + n);
   lbl.classList.add('busy'); lbl.childNodes[0].textContent = 'Uploading…';
+  var errEl = document.getElementById('upload-err-' + n);
+  errEl.textContent = '';
 
   try {
     var did = await ensureDeliverable(n);
@@ -418,19 +423,32 @@ async function handleUpload(n, files) {
       var safe = f.name.replace(/[^a-zA-Z0-9._()-]/g, '_');
       var path = SLUG + '/week-' + n + '/' + Date.now() + '-' + safe;
       var up = await _sb.storage.from('student-portal').upload(path, f);
-      if (up.error) throw up.error;
+      if (up.error) {
+        var msg = up.error.message || String(up.error);
+        if (msg.toLowerCase().includes('mime') || msg.toLowerCase().includes('content-type')) {
+          throw new Error('File type not allowed. Please upload PDF, Word (.doc/.docx), or PowerPoint (.ppt/.pptx) files only.');
+        }
+        if (msg.toLowerCase().includes('security policy') || msg.toLowerCase().includes('unauthorized') || up.error.statusCode === 403 || up.error.statusCode === '403') {
+          throw new Error('Upload was blocked by a permissions error. Please sign out and sign back in, then try again.');
+        }
+        if (msg.toLowerCase().includes('size') || msg.toLowerCase().includes('too large')) {
+          throw new Error('File is too large. Maximum file size is 50 MB.');
+        }
+        throw new Error(msg || 'Storage upload failed. Please try again.');
+      }
       var url = _sb.storage.from('student-portal').getPublicUrl(path).data.publicUrl;
-      await _sb.from('deliverable_files').insert({
+      var ins = await _sb.from('deliverable_files').insert({
         deliverable_id: did, file_name: f.name, file_url: url,
         file_type: f.type, file_size: f.size, student_comment: ''
       });
+      if (ins.error) throw new Error('Could not save file record: ' + ins.error.message);
     }
     // Refresh list
     var fr = await _sb.from('deliverable_files').select('*').eq('deliverable_id', did).order('created_at');
     if (fr.data) document.getElementById('files-' + n).innerHTML = fr.data.map(function(f) { return fileRow(f, n); }).join('');
     toast(files.length === 1 ? '1 file uploaded' : files.length + ' files uploaded');
   } catch (err) {
-    alert('Upload failed: ' + err.message);
+    errEl.textContent = err.message || 'Upload failed. Please try again.';
   } finally {
     lbl.classList.remove('busy'); lbl.childNodes[0].textContent = '+ Upload Files';
   }
