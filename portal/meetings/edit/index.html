@@ -458,7 +458,10 @@ async function handleSubmit(e) {
       throw new Error('Invite send failed: ' + (inviteData.error || inviteRes.status));
     }
     if (inviteData.errors && inviteData.errors.length > 0) {
-      console.warn('Some invites failed:', inviteData.errors);
+      throw new Error('Email delivery failed: ' + JSON.stringify(inviteData.errors));
+    }
+    if (inviteData.sent === 0) {
+      throw new Error('No invites sent — no attendees found for this meeting.');
     }
 
     window.location.href = '/portal/?success=updated';
