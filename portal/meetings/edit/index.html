@@ -445,7 +445,7 @@ async function handleSubmit(e) {
     if (insertResult.error) throw insertResult.error;
 
     // Resend invites (METHOD:REQUEST re-invite for calendar updates)
-    await fetch(SUPABASE_URL + '/functions/v1/send-meeting-invite', {
+    var inviteRes = await fetch(SUPABASE_URL + '/functions/v1/send-meeting-invite', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -453,6 +453,13 @@ async function handleSubmit(e) {
       },
       body: JSON.stringify({ meeting_id: meetingId })
     });
+    var inviteData = await inviteRes.json();
+    if (!inviteRes.ok) {
+      throw new Error('Invite send failed: ' + (inviteData.error || inviteRes.status));
+    }
+    if (inviteData.errors && inviteData.errors.length > 0) {
+      console.warn('Some invites failed:', inviteData.errors);
+    }
 
     window.location.href = '/portal/?success=updated';
   } catch (err) {
